@@ -1,0 +1,263 @@
+
+:root {
+    --student-orange: #FFA726;
+    --student-orange-dark: #F28C19;
+    --student-orange-light: #FFF5E6;
+    --student-navy: #2D3748;
+    --student-background: #F1F5F9;
+    --student-white: #FFFFFF;
+    --student-border: #E9EDF2;
+    --student-muted: #7B8794;
+    --student-shadow: 0 3px 18px rgba(45,55,72,.055);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    min-height: 100%;
+}
+
+body.student-body {
+    margin: 0;
+    min-height: 100vh;
+    background: #FAFBFC;
+    color: var(--student-navy);
+    font-family: "Inter", Arial, sans-serif;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+}
+
+.student-header {
+    background: var(--student-white);
+    border-bottom: 1px solid var(--student-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,.025);
+    position: relative;
+    z-index: 10;
+}
+
+.student-header-inner {
+    max-width: 1320px;
+    min-height: 74px;
+    padding: 10px 28px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.student-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    text-decoration: none;
+    flex-shrink: 0;
+}
+
+.student-brand-mark {
+    width: 43px;
+    height: 43px;
+    display: grid;
+    place-items: center;
+}
+
+.student-brand-mark svg {
+    width: 100%;
+    height: 100%;
+}
+
+.student-brand-name {
+    font-size: 19px;
+    font-weight: 800;
+    letter-spacing: -.7px;
+    color: #263849;
+}
+
+.student-brand-name span {
+    color: var(--student-orange-dark);
+}
+
+.student-navigation {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.student-nav-home {
+    text-decoration: none;
+    color: var(--student-navy);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.student-nav-primary {
+    background: linear-gradient(135deg, #FFA726, #F28C19);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    padding: 11px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    box-shadow: 0 3px 8px rgba(242,140,25,.16);
+    transition: background .2s, transform .2s;
+}
+
+.student-nav-primary:hover {
+    background: #E98410;
+    color: white;
+    transform: translateY(-1px);
+}
+
+.student-notification {
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    color: var(--student-navy);
+    border-radius: 50%;
+}
+
+.student-notification:hover {
+    background: var(--student-orange-light);
+}
+
+.student-notification svg {
+    width: 19px;
+    height: 19px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.student-account {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-left: 13px;
+    border-left: 1px solid var(--student-border);
+}
+
+.student-avatar {
+    width: 37px;
+    height: 37px;
+    border-radius: 50%;
+    background: #FFE8CC;
+    color: #E98113;
+    display: grid;
+    place-items: center;
+    font-weight: 800;
+    font-size: 12px;
+}
+
+.student-account-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.student-account-info strong {
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.student-account-info small {
+    font-size: 10px;
+    color: var(--student-muted);
+}
+
+.student-chevron {
+    color: var(--student-muted);
+    margin-left: 4px;
+}
+
+.student-main {
+    width: 100%;
+    max-width: 1320px;
+    padding: 28px;
+    margin: 0 auto;
+    flex: 1;
+}
+
+.student-footer {
+    text-align: center;
+    padding: 18px 16px;
+    color: #C48B4A;
+    background: #FFF9F1;
+    font-size: 12px;
+    font-style: italic;
+    border-top: 1px solid #F8EBDD;
+}
+
+.student-card {
+    background: white;
+    border: 1px solid var(--student-border);
+    border-radius: 12px;
+    box-shadow: var(--student-shadow);
+    padding: 22px;
+}
+
+.student-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 20px;
+    border-radius: 7px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    border: 0;
+    cursor: pointer;
+}
+
+.student-btn-primary {
+    background: var(--student-orange);
+    color: white;
+}
+
+.student-btn-primary:hover {
+    background: var(--student-orange-dark);
+    color: white;
+}
+
+.student-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .student-header-inner {
+        padding: 12px 16px;
+        flex-wrap: wrap;
+    }
+
+    .student-brand-name {
+        font-size: 17px;
+    }
+
+    .student-navigation {
+        width: 100%;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .student-nav-primary {
+        padding: 9px 12px;
+        font-size: 11px;
+    }
+
+    .student-account-info,
+    .student-chevron {
+        display: none;
+    }
+
+    .student-main {
+        padding: 18px 14px;
+    }
+}

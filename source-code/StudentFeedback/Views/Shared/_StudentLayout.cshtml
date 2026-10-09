@@ -1,0 +1,70 @@
+
+@{
+    var pageTitle = ViewData["Title"]?.ToString() ?? "Trang sinh viên";
+}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@pageTitle - StudentFeedback</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/student/student.css" asp-append-version="true" />
+</head>
+<body class="student-body">
+    <header class="student-header">
+        <div class="student-header-inner">
+            <a class="student-brand" href="/Student/Index" aria-label="StudentFeedback - Trang chủ">
+                <span class="student-brand-mark">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                        <path d="M4 20 32 7l28 13-28 13L4 20Z" fill="#FFA726"/>
+                        <path d="M16 29v15c0 7 32 7 32 0V29L32 36 16 29Z" fill="#F28C19"/>
+                        <path d="M20 32h31v19H37l-8 7v-7h-9V32Z" fill="#FFA726" stroke="white" stroke-width="2"/>
+                        <circle cx="29" cy="42" r="2" fill="white"/>
+                        <circle cx="36" cy="42" r="2" fill="white"/>
+                        <circle cx="43" cy="42" r="2" fill="white"/>
+                    </svg>
+                </span>
+                <span class="student-brand-name">Student<span>Feedback</span></span>
+            </a>
+
+            <nav class="student-navigation" aria-label="Điều hướng sinh viên">
+                <a class="student-nav-home" href="/Student/Index">Trang chủ</a>
+                <a class="student-nav-primary" href="/Student/List">
+                    Xem danh sách phản ánh
+                </a>
+                <a class="student-notification" href="#" aria-label="Thông báo" title="Thông báo">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+                    </svg>
+                </a>
+                <div class="student-account">
+                    <div class="student-avatar">SV</div>
+                    <div class="student-account-info">
+                        <strong>Sinh viên</strong>
+                        <small>Tài khoản sinh viên</small>
+                    </div>
+                    <span class="student-chevron">⌄</span>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main class="student-main">
+        @RenderBody()
+    </main>
+
+    <footer class="student-footer">
+        StudentFeedback — Cùng nhau xây dựng môi trường học tập tốt hơn!
+    </footer>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/student/student.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
