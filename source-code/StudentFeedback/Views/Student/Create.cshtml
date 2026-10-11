@@ -1,0 +1,129 @@
+@{
+    ViewData["Title"] = "Tạo phản ánh";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+<h1 style="color:red">KIỂM TRA TRANG CREATE</h1>
+<style>
+    .sf-page { max-width: 1120px; margin: 12px auto 50px; }
+    .sf-page h1 { font-size: 25px; font-weight: 800; color: #2d3748; }
+    .sf-page .sf-subtitle { color: #788596; font-size: 13px; }
+    .sf-box { background: #fff; border: 1px solid #edf0f4; border-radius: 14px; box-shadow: 0 4px 18px #2434480a; }
+    .sf-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
+    .sf-input { border-radius: 8px; border: 1px solid #e2e7ee; padding: 12px 14px; font-size: 13px; }
+    .sf-input:focus { border-color: #ffa726; box-shadow: 0 0 0 3px #ffa72624; }
+    .sf-btn { background: #ffa726; color: #fff; border: 0; border-radius: 7px; padding: 11px 20px; font-weight: 700; text-decoration: none; }
+    .sf-btn:hover { background: #f28c19; color: #fff; }
+    .sf-upload { border: 2px dashed #e0e5eb; background: #fcfdff; border-radius: 10px; padding: 24px; text-align: center; }
+    .sf-upload.dragging { background: #fff7ed; border-color: #ffa726; }
+    .sf-note { background: #fff8ef; border-color: #ffe9cc; }
+    .sf-note li { margin-bottom: 14px; color: #687586; font-size: 13px; line-height: 1.7; }
+</style>
+
+<div class="sf-page container">
+    <div class="mb-4">
+        <h1>Tạo phản ánh mới</h1>
+        <p class="sf-subtitle mb-0">Hãy mô tả chi tiết vấn đề và đính kèm minh chứng nếu có.</p>
+    </div>
+
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
+            <div class="sf-box p-4">
+                <form id="createReflectionForm" enctype="multipart/form-data">
+                    <div class="mb-4">
+                        <label for="reflectionTitle" class="sf-label">Tiêu đề phản ánh <span class="text-danger">*</span></label>
+                        <input id="reflectionTitle" name="Title" class="form-control sf-input" maxlength="200"
+                               placeholder="Nhập tiêu đề phản ánh..." required />
+                    </div>
+                    <div class="mb-4">
+                        <label for="reflectionCategory" class="sf-label">Danh mục <span class="text-danger">*</span></label>
+                        <select id="reflectionCategory" name="CategoryId" class="form-select sf-input" required>
+                            <option value="">Chọn danh mục</option>
+                            <option value="1">Cơ sở vật chất</option>
+                            <option value="2">Dịch vụ sinh viên</option>
+                            <option value="3">Phòng học</option>
+                            <option value="4">Học vụ</option>
+                            <option value="5">Khác</option>
+                        </select>
+                    </div>
+                    <div class="mb-4">
+                        <label for="reflectionContent" class="sf-label">Nội dung phản ánh <span class="text-danger">*</span></label>
+                        <textarea id="reflectionContent" name="Content" rows="7" maxlength="4000"
+                                  class="form-control sf-input" placeholder="Nhập nội dung phản ánh..." required></textarea>
+                        <div class="text-end text-secondary small mt-1"><span id="contentCount">0</span>/4000</div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="reflectionFiles" class="sf-label">Đính kèm minh chứng (không bắt buộc)</label>
+                        <div id="uploadZone" class="sf-upload">
+                            <div style="font-size:34px;color:#ffa726">⇧</div>
+                            <div class="mb-2">Kéo thả tệp vào đây hoặc</div>
+                            <label for="reflectionFiles" class="btn sf-btn">Chọn tệp</label>
+                            <input id="reflectionFiles" name="EvidenceFiles" type="file" class="visually-hidden"
+                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.zip" multiple />
+                            <div class="small text-secondary mt-3">JPG, PNG, PDF, DOC, DOCX, ZIP · Tối đa 10 MB mỗi tệp</div>
+                        </div>
+                        <ul id="selectedFiles" class="small mt-2 mb-0"></ul>
+                    </div>
+                    <div id="createNotice" class="alert alert-info small" role="status" hidden></div>
+                    <div class="d-flex gap-3 justify-content-end flex-wrap">
+                        <a href="/Student/Index" class="btn btn-light px-4 py-2">Hủy</a>
+                        <button type="submit" class="btn sf-btn">Gửi phản ánh →</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <aside class="sf-box sf-note p-4">
+                <h2 style="font-size:19px;color:#f28c19;font-weight:800">✦ Lưu ý</h2>
+                <ul class="ps-3 mt-3">
+                    <li>Vui lòng cung cấp thông tin chính xác và đầy đủ.</li>
+                    <li>Đính kèm minh chứng giúp việc xử lý nhanh hơn.</li>
+                    <li>Bạn có thể theo dõi trạng thái phản ánh trong danh sách.</li>
+                </ul>
+                <div class="text-center" style="font-size:68px;color:#ffa726" aria-hidden="true">✉</div>
+                <p class="text-center small mb-0" style="color:#b58b58">Mỗi phản ánh góp phần xây dựng môi trường học tập tốt hơn.</p>
+            </aside>
+        </div>
+    </div>
+</div>
+
+<script>
+(() => {
+    const form = document.getElementById('createReflectionForm');
+    const content = document.getElementById('reflectionContent');
+    const files = document.getElementById('reflectionFiles');
+    const zone = document.getElementById('uploadZone');
+    const list = document.getElementById('selectedFiles');
+    const notice = document.getElementById('createNotice');
+    content.addEventListener('input', () => document.getElementById('contentCount').textContent = content.value.length);
+    function showFiles() {
+        list.replaceChildren();
+        for (const file of files.files) {
+            const li = document.createElement('li');
+            li.textContent = file.name + ' (' + (file.size / 1048576).toFixed(2) + ' MB)';
+            list.appendChild(li);
+        }
+    }
+    files.addEventListener('change', showFiles);
+    ['dragover', 'dragenter'].forEach(type => zone.addEventListener(type, e => {
+        e.preventDefault(); zone.classList.add('dragging');
+    }));
+    ['dragleave', 'drop'].forEach(type => zone.addEventListener(type, e => {
+        e.preventDefault(); zone.classList.remove('dragging');
+    }));
+    zone.addEventListener('drop', e => {
+        if (e.dataTransfer && e.dataTransfer.files.length) {
+            files.files = e.dataTransfer.files; showFiles();
+        }
+    });
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        if (!form.reportValidity()) return;
+        const invalid = [...files.files].some(f => f.size > 10485760 || !/\.(jpg|jpeg|png|pdf|doc|docx|zip)$/i.test(f.name));
+        notice.hidden = false;
+        notice.className = invalid ? 'alert alert-danger small' : 'alert alert-info small';
+        notice.textContent = invalid
+            ? 'Tệp không hợp lệ hoặc vượt quá 10 MB. Vui lòng chọn lại.'
+            : 'Đã kiểm tra biểu mẫu. Đây là giao diện minh họa; dữ liệu chưa được gửi và lưu vào MySQL.';
+    });
+})();
+</script>

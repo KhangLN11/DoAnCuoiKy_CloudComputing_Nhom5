@@ -1,0 +1,95 @@
+@{
+    ViewData["Title"] = "Danh sách phản ánh";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+<h1 style="color:red">KIỂM TRA TRANG LIST</h1>
+<style>
+    .sf-list { max-width: 1120px; margin: 12px auto 50px; }
+    .sf-list h1 { font-size: 25px; font-weight: 800; color: #2d3748; }
+    .sf-list .sf-card { background: #fff; border: 1px solid #edf0f4; border-radius: 14px; box-shadow: 0 4px 18px #2434480a; }
+    .sf-list .sf-btn { background: #ffa726; color: #fff; border: 0; border-radius: 7px; padding: 11px 20px; font-weight: 700; text-decoration: none; }
+    .sf-list .sf-btn:hover { background: #f28c19; color: #fff; }
+    .sf-list .sf-filter { border: 1px solid #e5eaf0; background: #f8fafc; border-radius: 7px; padding: 9px 14px; color: #657283; }
+    .sf-list .sf-filter.active { background: #ffa726; border-color: #ffa726; color: #fff; }
+    .sf-list .sf-table { font-size: 13px; min-width: 790px; }
+    .sf-list .sf-table th { background: #f8fafc; color: #506276; padding: 15px; }
+    .sf-list .sf-table td { padding: 17px 15px; vertical-align: middle; }
+    .sf-list .sf-table tr[hidden] { display: none; }
+    .sf-list .sf-state { display: inline-block; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .sf-list .sf-new { background: #fff0ed; color: #ce665d; }
+    .sf-list .sf-working { background: #fff3da; color: #b78620; }
+    .sf-list .sf-done { background: #e8f8ef; color: #218b63; }
+    .sf-list .sf-closed { background: #eff1f4; color: #6e7b8a; }
+</style>
+
+<div class="sf-list container">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="mb-2">Danh sách phản ánh của tôi</h1>
+            <p class="text-secondary small mb-0">Theo dõi tiến độ xử lý các phản ánh đã gửi (dữ liệu minh họa).</p>
+        </div>
+        <a href="/Student/Create" class="sf-btn">+ Tạo phản ánh</a>
+    </div>
+
+    <section class="sf-card p-4">
+        <div class="row g-2 mb-3">
+            <div class="col-md-10">
+                <input id="reflectionSearch" type="search" class="form-control py-2"
+                       placeholder="Tìm kiếm theo tiêu đề, mã phản ánh..." aria-label="Tìm kiếm phản ánh" />
+            </div>
+            <div class="col-md-2"><button id="searchButton" type="button" class="sf-btn w-100">Tìm kiếm</button></div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mb-4" id="statusFilters">
+            <button class="sf-filter active" type="button" data-status="all">Tất cả</button>
+            <button class="sf-filter" type="button" data-status="Mới tạo">Mới tạo</button>
+            <button class="sf-filter" type="button" data-status="Đang xử lý">Đang xử lý</button>
+            <button class="sf-filter" type="button" data-status="Đã xử lý">Đã xử lý</button>
+            <button class="sf-filter" type="button" data-status="Đã đóng">Đã đóng</button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover sf-table mb-0">
+                <thead><tr><th>Mã phản ánh</th><th>Tiêu đề</th><th>Danh mục</th><th>Trạng thái</th><th>Ngày tạo</th><th>Thao tác</th></tr></thead>
+                <tbody id="reflectionRows">
+                    <tr data-status="Đang xử lý"><td><strong>PF001</strong></td><td>Máy chiếu phòng A101 bị hỏng</td><td>Cơ sở vật chất</td><td><span class="sf-state sf-working">Đang xử lý</span></td><td>05/10/2025</td><td><a href="/Student/Details?id=1" class="text-decoration-none">Xem chi tiết ↗</a></td></tr>
+                    <tr data-status="Đã xử lý"><td><strong>PF002</strong></td><td>Wifi chập chờn tại thư viện</td><td>Dịch vụ sinh viên</td><td><span class="sf-state sf-done">Đã xử lý</span></td><td>03/10/2025</td><td><a href="/Student/Details?id=2" class="text-decoration-none">Xem chi tiết ↗</a></td></tr>
+                    <tr data-status="Mới tạo"><td><strong>PF003</strong></td><td>Quạt phòng B202 không hoạt động</td><td>Phòng học</td><td><span class="sf-state sf-new">Mới tạo</span></td><td>01/10/2025</td><td><a href="/Student/Details?id=3" class="text-decoration-none">Xem chi tiết ↗</a></td></tr>
+                    <tr data-status="Đang xử lý"><td><strong>PF004</strong></td><td>Bàn ghế lớp học bị hư hỏng</td><td>Cơ sở vật chất</td><td><span class="sf-state sf-working">Đang xử lý</span></td><td>28/09/2025</td><td><a href="/Student/Details?id=4" class="text-decoration-none">Xem chi tiết ↗</a></td></tr>
+                    <tr data-status="Đã xử lý"><td><strong>PF005</strong></td><td>Thủ tục đăng ký học phần lỗi</td><td>Học vụ</td><td><span class="sf-state sf-done">Đã xử lý</span></td><td>25/09/2025</td><td><a href="/Student/Details?id=5" class="text-decoration-none">Xem chi tiết ↗</a></td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p id="noResults" class="text-center text-secondary py-4" hidden>Không tìm thấy phản ánh phù hợp.</p>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top small text-secondary">
+            <span id="reflectionCount">Tổng: 5 phản ánh (minh họa)</span>
+            <span class="sf-btn" style="padding:7px 13px" aria-label="Trang 1">1</span>
+        </div>
+    </section>
+</div>
+
+<script>
+(() => {
+    const rows = [...document.querySelectorAll('#reflectionRows tr')];
+    const input = document.getElementById('reflectionSearch');
+    const buttons = [...document.querySelectorAll('#statusFilters button')];
+    let status = 'all';
+    function filter() {
+        const query = input.value.trim().toLocaleLowerCase('vi');
+        let count = 0;
+        rows.forEach(row => {
+            const match = (status === 'all' || row.dataset.status === status) && row.textContent.toLocaleLowerCase('vi').includes(query);
+            row.hidden = !match;
+            if (match) count++;
+        });
+        document.getElementById('reflectionCount').textContent = `Hiển thị ${count}/${rows.length} phản ánh (minh họa)`;
+        document.getElementById('noResults').hidden = count !== 0;
+    }
+    input.addEventListener('input', filter);
+    document.getElementById('searchButton').addEventListener('click', filter);
+    buttons.forEach(button => button.addEventListener('click', () => {
+        status = button.dataset.status;
+        buttons.forEach(b => b.classList.toggle('active', b === button));
+        filter();
+    }));
+})();
+</script>
