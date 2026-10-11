@@ -1,0 +1,74 @@
+
+@model StudentFeedback.Models.AdminReflectionVM
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Chi tiết phản ánh";
+}
+
+<div class="page-heading">
+    <h1>Chi tiết phản ánh</h1>
+    <p>Kiểm tra nội dung và cập nhật quá trình xử lý.</p>
+</div>
+
+<div class="sf-card">
+    <div class="d-flex flex-wrap justify-content-between gap-3">
+        <div>
+            <div class="text-muted mb-2">Mã phản ánh</div>
+            <h4 class="fw-bold">@Model.Code</h4>
+        </div>
+        <span class="sf-status @(Model.Status == "Đã xử lý" ? "status-done" : Model.Status == "Đang xử lý" ? "status-processing" : Model.Status == "Đã đóng" ? "status-closed" : "status-new")">
+            @Model.Status
+        </span>
+    </div>
+
+    <hr class="my-4" />
+
+    <h4 class="fw-bold mb-3">@Model.Title</h4>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="text-muted mb-1">Sinh viên</div>
+            <strong>@Model.StudentName</strong>
+        </div>
+        <div class="col-md-6">
+            <div class="text-muted mb-1">Danh mục</div>
+            <strong>@Model.Category</strong>
+        </div>
+        <div class="col-md-6">
+            <div class="text-muted mb-1">Ngày tạo</div>
+            <strong>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</strong>
+        </div>
+    </div>
+
+    <h5 class="sf-section-title">Nội dung phản ánh</h5>
+    <div class="rounded-3 p-3 mb-4"
+         style="background:#fff8ee; white-space:pre-wrap">@Model.Content</div>
+
+    <h5 class="sf-section-title">Cập nhật xử lý</h5>
+
+    <form asp-action="UpdateStatus" method="post" class="sf-form">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+
+        <div class="mb-3">
+            <label for="status">Trạng thái</label>
+            <select id="status" name="status" class="form-select">
+                <option value="Mới tạo" selected="@(Model.Status == "Mới tạo")">Mới tạo</option>
+                <option value="Đang xử lý" selected="@(Model.Status == "Đang xử lý")">Đang xử lý</option>
+                <option value="Đã xử lý" selected="@(Model.Status == "Đã xử lý")">Đã xử lý</option>
+                <option value="Đã đóng" selected="@(Model.Status == "Đã đóng")">Đã đóng</option>
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label for="adminResponse">Phản hồi của Admin</label>
+            <textarea id="adminResponse" name="adminResponse"
+                      class="form-control" rows="4"
+                      placeholder="Nhập phản hồi...">@Model.AdminResponse</textarea>
+        </div>
+
+        <button type="submit" class="sf-btn">Lưu cập nhật</button>
+        <a asp-action="Reflections" class="sf-btn-outline ms-2">Quay lại</a>
+    </form>
+</div>

@@ -1,0 +1,49 @@
+
+@model List<StudentFeedback.Models.AdminCategoryVM>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Quản lý danh mục";
+}
+
+<div class="page-heading">
+    <h1>Quản lý danh mục</h1>
+    <p>Danh sách các nhóm vấn đề được sử dụng trong hệ thống.</p>
+</div>
+
+<div class="sf-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="sf-section-title mb-0">Danh sách danh mục</h3>
+        <span class="sf-status status-processing">@Model.Count danh mục</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table sf-table">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tên danh mục</th>
+                    <th>Mô tả</th>
+                    <th>Số phản ánh</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>DM@item.Id.ToString("D3")</td>
+                        <td><strong>@item.Name</strong></td>
+                        <td>@item.Description</td>
+                        <td>@item.ReflectionCount</td>
+                        <td><span class="sf-status status-done">Đang sử dụng</span></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-info mt-3 mb-0">
+        Đây là giao diện danh mục mẫu. Chưa có thao tác thêm, sửa hoặc xóa.
+    </div>
+</div>

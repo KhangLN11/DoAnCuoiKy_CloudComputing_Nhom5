@@ -1,0 +1,54 @@
+
+@model List<StudentFeedback.Models.AdminUserVM>
+
+@{
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Quản lý người dùng";
+}
+
+<div class="page-heading">
+    <h1>Quản lý người dùng</h1>
+    <p>Thông tin tài khoản và vai trò người dùng trong hệ thống.</p>
+</div>
+
+<div class="sf-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="sf-section-title mb-0">Danh sách tài khoản</h3>
+        <span class="sf-status status-processing">@Model.Count người dùng</span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table sf-table">
+            <thead>
+                <tr>
+                    <th>Mã tài khoản</th>
+                    <th>Mã sinh viên</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Vai trò</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr>
+                        <td>US@user.Id.ToString("D3")</td>
+                        <td>@user.StudentCode</td>
+                        <td><strong>@user.FullName</strong></td>
+                        <td>@user.Email</td>
+                        <td>@user.Role</td>
+                        <td>
+                            <span class="sf-status status-done">@user.Status</span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="alert alert-info mt-3 mb-0">
+        Giao diện này chỉ hiển thị tài khoản mẫu, chưa có chức năng chỉnh sửa
+        hoặc khóa tài khoản.
+    </div>
+</div>
