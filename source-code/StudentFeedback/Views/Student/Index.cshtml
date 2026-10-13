@@ -1,0 +1,139 @@
+
+@{
+    ViewData["Title"] = "Trang chủ sinh viên";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+
+<div class="container py-4">
+
+    <!-- Thông tin sinh viên -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-4">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center"
+                             style="width:100px;height:100px;background:#FFF0DF;color:#FF8A26;font-size:36px;">
+                            SV
+                        </div>
+                        <div>
+                            <h3 class="fw-bold">Nguyễn Văn A
+                                <span class="badge bg-warning text-dark fs-6">Sinh viên</span>
+                            </h3>
+                            <p class="mb-1">Mã sinh viên: SV123456</p>
+                            <p class="mb-1">Lớp: CNTT-K42</p>
+                            <p class="mb-0">Email: nguyenvana@stb.edu.vn</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mt-3 mt-md-0">
+                    <div class="p-4 rounded-4" style="background:#FFF3E5;">
+                        <h5 style="color:#F28C19;">StudentFeedback</h5>
+                        <p class="mb-0">
+                            Mỗi phản ánh của bạn là một bước tiến
+                            để xây dựng môi trường học tập tốt hơn!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Thống kê phản ánh -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <p>Tổng phản ánh</p>
+                    <h2 class="fw-bold text-warning">5</h2>
+                    <small class="text-muted">Tất cả phản ánh</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <p>Đang xử lý</p>
+                    <h2 class="fw-bold text-warning">2</h2>
+                    <small class="text-muted">Cần theo dõi</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <p>Đã xử lý</p>
+                    <h2 class="fw-bold text-success">3</h2>
+                    <small class="text-muted">Hoàn thành tốt</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <p>Mới tạo</p>
+                    <h2 class="fw-bold text-danger">1</h2>
+                    <small class="text-muted">Chờ xử lý</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Truy cập nhanh -->
+    <h4 class="fw-bold mb-3">Truy cập nhanh</h4>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+            <a href="/Student/Create" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                    <div class="fs-1">📝</div>
+                    <h6 class="mt-3 text-dark">Tạo phản ánh</h6>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <a href="/Student/List" class="text-decoration-none">
+                <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                    <div class="fs-1">📋</div>
+                    <h6 class="mt-3 text-dark">Danh sách phản ánh</h6>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                <div class="fs-1">👤</div>
+                <h6 class="mt-3">Thông tin cá nhân</h6>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-6">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4 h-100">
+                <div class="fs-1">🔔</div>
+                <h6 class="mt-3">Thông báo</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Banner -->
+    <div class="rounded-4 p-4 text-white"
+         style="background:linear-gradient(135deg,#FFB24D,#F28C19);">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h3 class="fw-bold">Gửi phản ánh ngay</h3>
+                <p>Chung tay xây dựng môi trường học tập tốt hơn.</p>
+                <a href="/Student/Create" class="btn btn-light fw-bold">
+                    Tạo phản ánh →
+                </a>
+            </div>
+            <div class="col-md-4 text-center">
+                <div style="font-size:75px;">✉️</div>
+            </div>
+        </div>
+    </div>
+
+</div>

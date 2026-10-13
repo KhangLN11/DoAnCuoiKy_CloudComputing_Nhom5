@@ -1,0 +1,22 @@
+﻿StudentFeedback API Test v2 - only disposable records are deleted
+Time: 2026-10-09 13:12:16
+[PASS] GET categories - HTTP 200
+[PASS] GET reflections - HTTP 200
+[PASS] GET responses - HTTP 200
+Using existing demo links: UserId=1, CategoryId=2
+[PASS] GET nonexisting reflection -> 404 - HTTP 404
+[PASS] Invalid status filter -> 400 - HTTP 400
+[PASS] Empty category name -> 400 - HTTP 400
+[PASS] Cannot delete category in use -> 409 - HTTP 409
+[PASS] POST temporary reflection -> 201 - HTTP 201
+[PASS] PUT reflection -> 204 - HTTP 204
+[PASS] GET verifies updated status/title - HTTP 200
+[PASS] Invalid reflection status -> 400 - HTTP 400
+[PASS] POST temporary response -> 201 - HTTP 201
+[PASS] PUT response -> 204 - HTTP 204
+[PASS] GET verifies updated response - HTTP 200
+[PASS] Empty response content -> 400 - HTTP 400
+[PASS] Cannot delete reflection with responses -> 409 - HTTP 409
+[PASS] DELETE response -> 204 - HTTP 204
+[PASS] DELETE reflection -> 204 - HTTP 204
+RESULT: 18 PASS / 0 FAIL

@@ -1,0 +1,84 @@
+@{
+    ViewData["Title"] = "Chi tiết phản ánh";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+    var id = Context.Request.Query["id"].ToString();
+    if (string.IsNullOrWhiteSpace(id)) id = ViewContext.RouteData.Values["id"]?.ToString() ?? "1";
+    var items = new[]
+    {
+        new { Id="1", Code="PF001", Title="Máy chiếu phòng A101 bị hỏng", Category="Cơ sở vật chất", Status="Đang xử lý", Created="05/10/2025 10:24", Updated="06/10/2025 09:15", Content="Phòng học A101 không hiển thị hình ảnh. Thiết bị trong phòng đã cũ, ảnh hưởng đến quá trình học tập. Mong nhà trường kiểm tra và hỗ trợ sửa chữa sớm." },
+        new { Id="2", Code="PF002", Title="Wifi chập chờn tại thư viện", Category="Dịch vụ sinh viên", Status="Đã xử lý", Created="03/10/2025 08:30", Updated="04/10/2025 15:20", Content="Kết nối Wi-Fi tại thư viện thường xuyên bị gián đoạn, khiến sinh viên khó tra cứu tài liệu học tập." },
+        new { Id="3", Code="PF003", Title="Quạt phòng B202 không hoạt động", Category="Phòng học", Status="Mới tạo", Created="01/10/2025 13:00", Updated="Chưa cập nhật", Content="Quạt trần trong phòng B202 không hoạt động. Mong bộ phận kỹ thuật kiểm tra." },
+        new { Id="4", Code="PF004", Title="Bàn ghế lớp học bị hư hỏng", Category="Cơ sở vật chất", Status="Đang xử lý", Created="28/09/2025 10:00", Updated="29/09/2025 14:00", Content="Một số bàn ghế lớp học bị hư hỏng, gây bất tiện trong giờ học." },
+        new { Id="5", Code="PF005", Title="Thủ tục đăng ký học phần lỗi", Category="Học vụ", Status="Đã xử lý", Created="25/09/2025 09:00", Updated="26/09/2025 11:30", Content="Hệ thống đăng ký học phần báo lỗi trong quá trình xác nhận môn học." }
+    };
+    var item = items.FirstOrDefault(x => x.Id == id);
+}
+<h1 style="color:red">KIỂM TRA TRANG DETAILS</h1>
+<style>
+    .sf-detail { max-width: 1120px; margin: 12px auto 50px; }
+    .sf-detail h1 { font-size: 24px; font-weight: 800; color: #2d3748; }
+    .sf-detail h2 { font-size: 17px; font-weight: 800; color: #2d3748; }
+    .sf-detail .sf-card { background: #fff; border: 1px solid #edf0f4; border-radius: 14px; box-shadow: 0 4px 18px #2434480a; }
+    .sf-detail .sf-meta { border: 1px solid #edf0f4; border-radius: 10px; padding: 16px; height: 100%; }
+    .sf-detail .sf-meta small { display: block; color: #8b97a5; margin-bottom: 6px; }
+    .sf-detail .sf-meta strong { color: #2d3748; }
+    .sf-detail .sf-state { background: #fff3da; color: #ad7b15; border-radius: 7px; padding: 8px 13px; font-weight: 700; font-size: 12px; }
+    .sf-detail .sf-section { border-top: 1px solid #edf0f4; padding: 26px 0; }
+    .sf-detail .sf-reply { background: #f1f8fd; border: 1px solid #e0eef7; border-radius: 9px; padding: 18px; }
+</style>
+
+<div class="sf-detail container">
+    <a href="/Student/List" class="text-decoration-none d-inline-block mb-4" style="color:#64748b">← Quay lại danh sách</a>
+
+    @if (item == null)
+    {
+        <section class="sf-card p-5 text-center">
+            <h1>Không tìm thấy phản ánh</h1>
+            <p class="text-secondary">Mã phản ánh không tồn tại trong dữ liệu minh họa.</p>
+            <a href="/Student/List" class="btn btn-warning">Về danh sách phản ánh</a>
+        </section>
+    }
+    else
+    {
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+            <div>
+                <h1 class="mb-2">@item.Code - @item.Title</h1>
+                <p class="small text-secondary mb-0">Thông tin chi tiết phản ánh (dữ liệu minh họa)</p>
+            </div>
+            <span class="sf-state">@item.Status</span>
+        </div>
+
+        <section class="sf-card px-4">
+            <div class="row g-3 py-4">
+                <div class="col-md-4"><div class="sf-meta"><small>▤ Danh mục</small><strong>@item.Category</strong></div></div>
+                <div class="col-md-4"><div class="sf-meta"><small>▣ Ngày tạo</small><strong>@item.Created</strong></div></div>
+                <div class="col-md-4"><div class="sf-meta"><small>◷ Cập nhật lần cuối</small><strong>@item.Updated</strong></div></div>
+            </div>
+            <div class="sf-section">
+                <h2>Nội dung phản ánh</h2>
+                <p class="text-secondary mb-0" style="line-height:1.9">@item.Content</p>
+            </div>
+            <div class="sf-section">
+                <h2>Minh chứng</h2>
+                <div class="rounded border p-3 d-flex gap-3 align-items-center" style="max-width:560px">
+                    <div style="font-size:44px;color:#ffa726" aria-hidden="true">▧</div>
+                    <div>
+                        <strong class="d-block">Khu vực tệp minh chứng</strong>
+                        <small class="text-secondary">Chưa có tệp thật. Minh chứng sẽ hiển thị khi kết nối chức năng tải lên.</small>
+                    </div>
+                </div>
+            </div>
+            <div class="sf-section">
+                <h2>Phản hồi từ Admin</h2>
+                <div class="sf-reply d-flex gap-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;background:#d7eaf7;color:#477b9d;font-weight:700">AD</div>
+                    <div>
+                        <strong>Phản hồi minh họa</strong>
+                        <p class="small mb-1 mt-2" style="color:#5b7388">Nhà trường đã tiếp nhận phản ánh và sẽ kiểm tra, xử lý theo quy trình.</p>
+                        <small class="text-secondary">Đây không phải phản hồi thật từ Admin.</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+</div>
