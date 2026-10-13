@@ -1,3 +1,4 @@
+
 using System.ComponentModel.DataAnnotations;
 
 namespace StudentFeedback.Models;
@@ -14,4 +15,18 @@ public class User
     [EmailAddress]
     [StringLength(255)]
     public string Email { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(255)]
+    public string PasswordHash { get; set; } = string.Empty;
+
+    [Required]
+    [StringLength(20)]
+    public string Role { get; set; } = "Student";
+
+    [StringLength(20)]
+    public string? StudentCode { get; set; }
+
+    [StringLength(100)]
+    public string? ClassName { get; set; }
 }
