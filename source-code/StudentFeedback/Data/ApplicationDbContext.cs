@@ -16,6 +16,7 @@ public class ApplicationDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+       
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.Entity<User>()
@@ -50,5 +51,7 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(a => a.ReflectionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        
     }
 }
