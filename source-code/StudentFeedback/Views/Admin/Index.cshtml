@@ -1,0 +1,76 @@
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<section class="stats">
+    <div class="stat-card orange">
+        <h3>Tổng phản ánh</h3>
+        <strong>—</strong>
+    </div>
+
+    <div class="stat-card blue">
+        <h3>Mới tạo</h3>
+        <strong>—</strong>
+    </div>
+
+    <div class="stat-card yellow">
+        <h3>Đang xử lý</h3>
+        <strong>—</strong>
+    </div>
+
+    <div class="stat-card green">
+        <h3>Đã xử lý</h3>
+        <strong>—</strong>
+    </div>
+</section>
+
+<section class="charts">
+    <div class="panel">
+        <h2>Thống kê theo danh mục</h2>
+
+        <div class="placeholder">
+            Biểu đồ sẽ hiển thị sau khi
+            kết nối dữ liệu MariaDB.
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Tỷ lệ xử lý</h2>
+
+        <div class="placeholder">
+            Biểu đồ tỷ lệ xử lý
+            đang được xây dựng.
+        </div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Danh sách phản ánh gần đây</h2>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã phản ánh</th>
+                    <th>Sinh viên</th>
+                    <th>Tiêu đề</th>
+                    <th>Danh mục</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr>
+                    <td colspan="7" class="empty">
+                        Dữ liệu phản ánh sẽ được
+                        kết nối ở bước tiếp theo.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
