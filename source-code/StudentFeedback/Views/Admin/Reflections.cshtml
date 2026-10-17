@@ -1,0 +1,195 @@
+
+@model StudentFeedback.Models.ViewModels.AdminReflectionListViewModel
+
+@{
+    ViewData["Title"] = "Quản lý phản ánh";
+    Layout = "_AdminLayout";
+}
+
+<div class="category-header">
+    <div>
+        <h1>Quản lý phản ánh</h1>
+        <p>Theo dõi và xử lý phản ánh của sinh viên</p>
+    </div>
+</div>
+
+<section class="stats">
+    <div class="stat-card orange">
+        <h3>Tổng phản ánh</h3>
+        <strong>@Model.TotalCount</strong>
+    </div>
+
+    <div class="stat-card blue">
+        <h3>Chờ xử lý</h3>
+        <strong>@Model.PendingCount</strong>
+    </div>
+
+    <div class="stat-card yellow">
+        <h3>Đang xử lý</h3>
+        <strong>@Model.InProgressCount</strong>
+    </div>
+
+    <div class="stat-card green">
+        <h3>Đã giải quyết</h3>
+        <strong>@Model.ResolvedCount</strong>
+    </div>
+</section>
+
+<div class="panel">
+
+    <form asp-controller="Admin"
+          asp-action="Reflections"
+          method="get"
+          class="reflection-filters">
+
+        <input type="text"
+               name="search"
+               value="@Model.Search"
+               placeholder="Tìm theo tiêu đề hoặc nội dung..."
+               class="form-control" />
+
+        <select name="status" class="form-control">
+            <option value="">Tất cả trạng thái</option>
+
+            <option value="Pending"
+                    selected="@(Model.Status == "Pending")">
+                Chờ xử lý
+            </option>
+
+            <option value="InProgress"
+                    selected="@(Model.Status == "InProgress")">
+                Đang xử lý
+            </option>
+
+            <option value="Resolved"
+                    selected="@(Model.Status == "Resolved")">
+                Đã giải quyết
+            </option>
+
+            <option value="Closed"
+                    selected="@(Model.Status == "Closed")">
+                Đã đóng
+            </option>
+        </select>
+
+        <select name="categoryId" class="form-control">
+            <option value="">Tất cả danh mục</option>
+
+            @foreach (var category in Model.Categories)
+            {
+                <option value="@category.Id"
+                        selected="@(Model.CategoryId == category.Id)">
+                    @category.Name
+                </option>
+            }
+        </select>
+
+        <button type="submit" class="btn-save">
+            Lọc
+        </button>
+
+        <a asp-controller="Admin"
+           asp-action="Reflections"
+           class="btn-cancel">
+            Xóa lọc
+        </a>
+    </form>
+
+    <div class="admin-table-wrapper">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Tiêu đề</th>
+                    <th>Sinh viên</th>
+                    <th>Danh mục</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @if (Model.Reflections.Count == 0)
+                {
+                    <tr>
+                        <td colspan="7" class="empty">
+                            Không tìm thấy phản ánh nào.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var item in Model.Reflections)
+                    {
+                        <tr>
+                            <td>#@item.Id</td>
+
+                            <td>
+                                <strong>@item.Title</strong>
+                            </td>
+
+                            <td>
+                                @(item.User?.FullName ?? "Không xác định")
+                            </td>
+
+                            <td>
+                                @(item.Category?.Name ?? "Không xác định")
+                            </td>
+
+                            <td>
+                                @switch (item.Status)
+                                {
+                                    case "Pending":
+                                        <span class="status-badge pending">
+                                            Chờ xử lý
+                                        </span>
+                                        break;
+
+                                    case "InProgress":
+                                        <span class="status-badge in-progress">
+                                            Đang xử lý
+                                        </span>
+                                        break;
+
+                                    case "Resolved":
+                                        <span class="status-badge resolved">
+                                            Đã giải quyết
+                                        </span>
+                                        break;
+
+                                    case "Closed":
+                                        <span class="status-badge closed">
+                                            Đã đóng
+                                        </span>
+                                        break;
+
+                                    default:
+                                        <span>@item.Status</span>
+                                        break;
+                                }
+                            </td>
+
+                            <td>
+                                @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                            </td>
+
+                            <td>
+                                <a asp-controller="Admin"
+                                   asp-action="ReflectionDetails"
+                                   asp-route-id="@item.Id"
+                                   class="btn-edit">
+                                    Xem chi tiết
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <p class="category-count">
+        Hiển thị @Model.Reflections.Count phản ánh
+    </p>
+</div>

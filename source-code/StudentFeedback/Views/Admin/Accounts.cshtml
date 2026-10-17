@@ -1,0 +1,224 @@
+
+@model StudentFeedback.Models.ViewModels.AdminAccountListViewModel
+
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+    Layout = "_AdminLayout";
+}
+
+<div class="accounts-page">
+
+    <!-- Tiêu đề trang -->
+    <div class="accounts-page-header">
+        <div>
+            <h1>Quản lý tài khoản</h1>
+            <p>
+                Theo dõi thông tin và vai trò của các
+                tài khoản trong hệ thống.
+            </p>
+
+            <a asp-controller="Admin"
+   asp-action="ImportStudents"
+   class="student-import-button"
+   style="display:inline-block; text-decoration:none; margin-top:16px;">
+    Nhập danh sách sinh viên (CSV)
+</a>
+        </div>
+    </div>
+
+    <!-- Thống kê tài khoản -->
+    <div class="accounts-stats">
+
+        <div class="accounts-stat-card">
+            <div class="accounts-stat-label">
+                Tổng tài khoản
+            </div>
+
+            <div class="accounts-stat-value">
+                @Model.TotalAccounts
+            </div>
+        </div>
+
+        <div class="accounts-stat-card">
+            <div class="accounts-stat-label">
+                Tài khoản sinh viên
+            </div>
+
+            <div class="accounts-stat-value">
+                @Model.TotalStudents
+            </div>
+        </div>
+
+        <div class="accounts-stat-card">
+            <div class="accounts-stat-label">
+                Tài khoản quản trị viên
+            </div>
+
+            <div class="accounts-stat-value">
+                @Model.TotalAdmins
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Danh sách tài khoản -->
+    <section class="accounts-panel">
+
+        <div class="accounts-panel-header">
+            <div>
+                <h2>Danh sách tài khoản</h2>
+                <p>
+                    Hiển thị @Model.Accounts.Count tài khoản
+                    theo điều kiện tìm kiếm và lọc.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tìm kiếm và lọc -->
+        <form
+            asp-controller="Admin"
+            asp-action="Accounts"
+            method="get"
+            class="accounts-filter-form">
+
+            <input
+                type="text"
+                name="search"
+                value="@Model.Search"
+                placeholder="Tìm theo họ tên, email hoặc mã sinh viên..."
+                class="accounts-search-input"
+                maxlength="255" />
+
+            <select
+                name="roleFilter"
+                class="accounts-role-select">
+
+                <option value="">
+                    Tất cả vai trò
+                </option>
+
+                <option
+                    value="Student"
+                    selected="@(Model.RoleFilter == "Student")">
+                    Sinh viên
+                </option>
+
+                <option
+                    value="Admin"
+                    selected="@(Model.RoleFilter == "Admin")">
+                    Quản trị viên
+                </option>
+
+            </select>
+
+            <button
+                type="submit"
+                class="accounts-search-button">
+                Tìm kiếm
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Search) ||
+                 !string.IsNullOrWhiteSpace(Model.RoleFilter))
+            {
+                <a
+                    asp-controller="Admin"
+                    asp-action="Accounts"
+                    class="accounts-reset-button">
+                    Xóa lọc
+                </a>
+            }
+
+        </form>
+
+        <!-- Bảng danh sách tài khoản -->
+        <div class="accounts-table-wrapper">
+
+            <table class="accounts-table">
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ và tên</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Mã sinh viên</th>
+                        <th>Lớp</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (Model.Accounts.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6" class="accounts-empty">
+                                Không tìm thấy tài khoản phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var account in Model.Accounts)
+                        {
+                            <tr>
+
+                                <td>
+                                    @account.Id
+                                </td>
+
+                                <td>
+                                    <span class="accounts-name">
+                                        @account.FullName
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @account.Email
+                                </td>
+
+                                <td>
+                                    @if (account.Role == "Admin")
+                                    {
+                                        <span class="accounts-role admin">
+                                            Quản trị viên
+                                        </span>
+                                    }
+                                    else if (account.Role == "Student")
+                                    {
+                                        <span class="accounts-role student">
+                                            Sinh viên
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="accounts-role unknown">
+                                            @account.Role
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(account.StudentCode)
+                                        ? "—"
+                                        : account.StudentCode)
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(account.ClassName)
+                                        ? "—"
+                                        : account.ClassName)
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>

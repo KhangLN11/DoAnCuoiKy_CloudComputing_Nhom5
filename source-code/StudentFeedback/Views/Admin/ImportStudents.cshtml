@@ -1,0 +1,178 @@
+
+@model StudentFeedback.Models.ViewModels.AdminStudentCsvPreviewViewModel
+
+@{
+    ViewData["Title"] = "Nhập danh sách sinh viên";
+    Layout = "_AdminLayout";
+}
+
+<div class="student-import-page">
+
+    <div class="student-import-header">
+        <a asp-controller="Admin"
+           asp-action="Accounts"
+           class="student-import-back">
+            ← Quay lại quản lý tài khoản
+        </a>
+
+        <h1>Nhập danh sách sinh viên</h1>
+        <p>
+            Tải lên file CSV để kiểm tra và xem trước dữ liệu.
+            Chức năng này chưa tạo tài khoản trong hệ thống.
+        </p>
+    </div>
+
+    <section class="student-import-panel">
+
+        <h2>Tải file CSV</h2>
+
+        <p class="student-import-note">
+            File UTF-8, tối đa 2 MB và 5.000 dòng dữ liệu.
+            Các cột bắt buộc theo thứ tự:
+            StudentCode, FullName, Email, ClassName.
+        </p>
+
+        <form asp-controller="Admin"
+              asp-action="ImportStudents"
+              method="post"
+              enctype="multipart/form-data">
+
+            @Html.AntiForgeryToken()
+
+            <div class="student-import-upload">
+                <label for="csvFile">Chọn file CSV</label>
+
+                <input type="file"
+                       id="csvFile"
+                       name="csvFile"
+                       accept=".csv,text/csv"
+                       required />
+            </div>
+
+            <button type="submit"
+                    class="student-import-button">
+                Kiểm tra và xem trước
+            </button>
+
+        </form>
+
+        @if (Model.FileErrors.Count > 0)
+        {
+            <div class="student-import-errors">
+                <strong>File CSV có lỗi:</strong>
+
+                <ul>
+                    @foreach (var error in Model.FileErrors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+
+    </section>
+
+    @if (Model.Rows.Count > 0)
+    {
+        <div class="student-import-stats">
+
+            <div class="student-import-stat">
+                <span>Tổng số dòng</span>
+                <strong>@Model.TotalRows</strong>
+            </div>
+
+            <div class="student-import-stat">
+                <span>Hợp lệ</span>
+                <strong class="valid">
+                    @Model.ValidRows
+                </strong>
+            </div>
+
+            <div class="student-import-stat">
+                <span>Không hợp lệ</span>
+                <strong class="invalid">
+                    @Model.InvalidRows
+                </strong>
+            </div>
+
+        </div>
+
+        <section class="student-import-panel">
+
+            <h2>Kết quả xem trước</h2>
+
+            <p class="student-import-note">
+                File: @Model.FileName
+            </p>
+
+            <div class="student-import-table-wrapper">
+
+                <table class="student-import-table">
+
+                    <thead>
+                        <tr>
+                            <th>Dòng</th>
+                            <th>Mã sinh viên</th>
+                            <th>Họ tên</th>
+                            <th>Email</th>
+                            <th>Lớp</th>
+                            <th>Kết quả</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var row in Model.Rows)
+                        {
+                            <tr>
+                                <td>@row.RowNumber</td>
+
+                                <td>@row.StudentCode</td>
+
+                                <td>@row.FullName</td>
+
+                                <td>@row.Email</td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(row.ClassName)
+                                        ? "—"
+                                        : row.ClassName)
+                                </td>
+
+                                <td>
+                                    @if (row.IsValid)
+                                    {
+                                        <span class="student-import-status valid">
+                                            Hợp lệ
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="student-import-status invalid">
+                                            Không hợp lệ
+                                        </span>
+
+                                        <ul class="student-import-row-errors">
+                                            @foreach (var error in row.Errors)
+                                            {
+                                                <li>@error</li>
+                                            }
+                                        </ul>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            <div class="student-import-warning">
+                Đây chỉ là bản xem trước.
+                Chưa có tài khoản nào được tạo.
+            </div>
+
+        </section>
+    }
+
+</div>

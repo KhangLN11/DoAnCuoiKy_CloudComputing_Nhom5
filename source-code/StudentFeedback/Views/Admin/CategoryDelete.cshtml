@@ -1,0 +1,63 @@
+
+@model StudentFeedback.Models.Category
+
+@{
+    ViewData["Title"] = "Xóa danh mục";
+    Layout = "_AdminLayout";
+}
+
+<div class="category-header">
+    <div>
+        <h1>Xác nhận xóa danh mục</h1>
+        <p>Kiểm tra thông tin trước khi xóa.</p>
+    </div>
+</div>
+
+<div class="panel" style="max-width: 750px;">
+
+    <div class="delete-warning">
+        <strong>⚠️ Cảnh báo</strong>
+
+        <p>
+            Bạn có chắc chắn muốn xóa danh mục này?
+            Thao tác này không thể hoàn tác.
+        </p>
+    </div>
+
+    <div class="delete-info">
+        <p>
+            <strong>Mã danh mục:</strong>
+            @Model.Id
+        </p>
+
+        <p>
+            <strong>Tên danh mục:</strong>
+            @Model.Name
+        </p>
+
+        <p>
+            <strong>Mô tả:</strong>
+            @(Model.Description ?? "Chưa có mô tả")
+        </p>
+    </div>
+
+    <form asp-controller="Admin"
+          asp-action="CategoryDelete"
+          asp-route-id="@Model.Id"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <div class="form-actions">
+            <a asp-controller="Admin"
+               asp-action="Categories"
+               class="btn-cancel">
+                Hủy
+            </a>
+
+            <button type="submit" class="btn-delete-confirm">
+                Xác nhận xóa
+            </button>
+        </div>
+    </form>
+</div>

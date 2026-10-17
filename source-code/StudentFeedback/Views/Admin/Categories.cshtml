@@ -8,12 +8,36 @@
 
 <div class="category-page">
 
-    <div class="category-header">
-        <div>
-            <h1>Quản lý danh mục</h1>
-            <p>Quản lý các danh mục phản ánh của sinh viên</p>
-        </div>
+    
+<div class="category-header">
+    <div>
+        <h1>Quản lý danh mục</h1>
+        <p>Quản lý các danh mục phản ánh của sinh viên</p>
     </div>
+
+    <a asp-controller="Admin"
+       asp-action="CategoryCreate"
+       class="btn-save">
+        + Thêm danh mục
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="admin-success-message" role="status">
+        @message
+    </div>
+}
+
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="admin-error-message" role="alert">
+        @errorMessage
+    </div>
+}
+
+
 
     <div class="panel">
 
@@ -70,9 +94,21 @@
                                     @(item.Description ?? "Chưa có mô tả")
                                 </td>
                                 <td>
-                                    <span class="category-action-note">
-                                        Sắp bổ sung sửa / xóa
-                                    </span>
+                                    <div class="category-actions">
+                                        <a asp-controller="Admin"
+                                           asp-action="CategoryEdit"
+                                           asp-route-id="@item.Id"
+                                           class="btn-edit">
+                                            Sửa
+                                        </a>
+
+                                        <a asp-controller="Admin"
+                                           asp-action="CategoryDelete"
+                                           asp-route-id="@item.Id"
+                                           class="btn-delete">
+                                            Xóa
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         }

@@ -2,11 +2,13 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using StudentFeedback.Data;
+using StudentFeedback.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<StudentCsvPreviewService>();
 
 // Database
 var connectionString = builder.Configuration
