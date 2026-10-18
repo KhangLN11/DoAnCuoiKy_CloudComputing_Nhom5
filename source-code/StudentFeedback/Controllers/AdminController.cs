@@ -7,6 +7,8 @@ using StudentFeedback.Models;
 using StudentFeedback.Models.ViewModels;
 using System.Security.Claims;
 using StudentFeedback.Services;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Cryptography;
 
 
 namespace StudentFeedback.Controllers;
@@ -15,11 +17,15 @@ namespace StudentFeedback.Controllers;
 public class AdminController : Controller
 {
     private readonly ApplicationDbContext _db;
+private readonly ILogger<AdminController> _logger;
 
-    public AdminController(ApplicationDbContext db)
-    {
-        _db = db;
-    }
+public AdminController(
+    ApplicationDbContext db,
+    ILogger<AdminController> logger)
+{
+    _db = db;
+    _logger = logger;
+}
 
     // GET: /Admin/Index
     // Trang Dashboard
@@ -274,68 +280,87 @@ public async Task<IActionResult> Reflections(
 
 
     
-// GET: /Admin/Accounts
-[HttpGet]
-public async Task<IActionResult> Accounts(
-    string? search,
-    string? roleFilter)
-{
-    var query = _db.Users.AsNoTracking();
 
-    // Tìm theo họ tên, email hoặc mã sinh viên
-    if (!string.IsNullOrWhiteSpace(search))
+    // GET: /Admin/Accounts
+    [HttpGet]
+    public async Task<IActionResult> Accounts(
+        string? search,
+        string? roleFilter)
     {
-        string keyword = search.Trim();
+        var query = _db.Users.AsNoTracking();
 
-        query = query.Where(u =>
-            u.FullName.Contains(keyword) ||
-            u.Email.Contains(keyword) ||
-            (u.StudentCode != null &&
-             u.StudentCode.Contains(keyword)));
-    }
-
-    // Chỉ chấp nhận các giá trị lọc hợp lệ
-    if (roleFilter == "Student" || roleFilter == "Admin")
-    {
-        query = query.Where(u => u.Role == roleFilter);
-    }
-    else
-    {
-        roleFilter = null;
-    }
-
-    var accounts = await query
-        .OrderBy(u => u.Role)
-        .ThenBy(u => u.FullName)
-        .ThenBy(u => u.Id)
-        .Select(u => new AdminAccountItemViewModel
+        // Tìm theo họ tên, email hoặc mã sinh viên
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            Id = u.Id,
-            FullName = u.FullName,
-            Email = u.Email,
-            Role = u.Role,
-            StudentCode = u.StudentCode,
-            ClassName = u.ClassName
-        })
-        .ToListAsync();
+            string keyword = search.Trim();
 
-    var model = new AdminAccountListViewModel
-    {
-        Accounts = accounts,
-        Search = search,
-        RoleFilter = roleFilter,
+            query = query.Where(u =>
+                u.FullName.Contains(keyword) ||
+                u.Email.Contains(keyword) ||
+                (u.StudentCode != null &&
+                 u.StudentCode.Contains(keyword)));
+        }
 
-        TotalAccounts = await _db.Users.CountAsync(),
+        // Chỉ chấp nhận các giá trị lọc hợp lệ
+        if (roleFilter == "Student" || roleFilter == "Admin")
+        {
+            query = query.Where(u => u.Role == roleFilter);
+        }
+        else
+        {
+            roleFilter = null;
+        }
 
-        TotalStudents = await _db.Users
-            .CountAsync(u => u.Role == "Student"),
+        var accounts = await query
+            .OrderBy(u => u.Role)
+            .ThenBy(u => u.FullName)
+            .ThenBy(u => u.Id)
+            .Select(u => new AdminAccountItemViewModel
+            {
+                Id = u.Id,
+                FullName = u.FullName,
+                Email = u.Email,
+                Role = u.Role,
+                StudentCode = u.StudentCode,
+                ClassName = u.ClassName,
 
-        TotalAdmins = await _db.Users
-            .CountAsync(u => u.Role == "Admin")
-    };
+                // Lấy trạng thái kích hoạt thực tế từ database
+                IsActive = u.IsActive
+            })
+            .ToListAsync();
 
-    return View(model);
+        var model = new AdminAccountListViewModel
+        {
+            Accounts = accounts,
+            Search = search,
+            RoleFilter = roleFilter,
+
+            TotalAccounts = await _db.Users.CountAsync(),
+
+            TotalStudents = await _db.Users
+                .CountAsync(u => u.Role == "Student"),
+
+            TotalAdmins = await _db.Users
+                .CountAsync(u => u.Role == "Admin")
+        };
+
+        return View(model);
+    }
+
+    
+    // POST: /Admin/ActivateAllStudents
+    
+[HttpPost]
+[ValidateAntiForgeryToken]
+public IActionResult ActivateAllStudents()
+{
+    TempData["ErrorMessage"] =
+        "Chức năng kích hoạt hàng loạt đang tạm khóa. " +
+        "Sinh viên sẽ được kích hoạt sau khi thiết lập mật khẩu thành công.";
+
+    return RedirectToAction(nameof(Accounts));
 }
+
 
 
     
@@ -724,12 +749,14 @@ public async Task<IActionResult> ReflectionReply(
 
 
     
+
 [HttpPost]
 [ValidateAntiForgeryToken]
 [RequestSizeLimit(3 * 1024 * 1024)]
 public async Task<IActionResult> ImportStudents(
     IFormFile? csvFile,
-    [FromServices] StudentCsvPreviewService csvService)
+    [FromServices] StudentCsvPreviewService csvService,
+    [FromServices] StudentCsvTemporaryStorageService temporaryStorage)
 {
     var model = new AdminStudentCsvPreviewViewModel();
 
@@ -839,10 +866,288 @@ public async Task<IActionResult> ImportStudents(
     model.ValidRows = model.Rows.Count(r => r.IsValid);
     model.InvalidRows = model.Rows.Count(r => !r.IsValid);
 
-    // 10. Chỉ hiển thị kết quả.
-    // Không ghi database.
+    // 10. Chỉ lưu tạm nếu tất cả dòng đều hợp lệ.
+    if (model.TotalRows > 0 && model.InvalidRows == 0)
+    {
+        // Lấy ID Admin đang đăng nhập.
+        var adminIdText = User.FindFirst(
+            ClaimTypes.NameIdentifier
+        )?.Value;
+
+        if (!int.TryParse(adminIdText, out var adminId) ||
+            adminId <= 0)
+        {
+            model.FileErrors.Add(
+                "Không xác định được tài khoản quản trị viên.");
+
+            return View(model);
+        }
+
+        // Kiểm tra tài khoản vẫn là Admin đang hoạt động.
+        var isActiveAdmin = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u =>
+                u.Id == adminId &&
+                u.Role == "Admin" &&
+                u.IsActive);
+
+        if (!isActiveAdmin)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            // Mở lại file gốc để lưu tạm.
+            await using var sourceStream =
+                csvFile.OpenReadStream();
+
+            model.ImportToken =
+                await temporaryStorage.SaveAsync(
+                    sourceStream,
+                    adminId);
+        }
+        catch (IOException)
+        {
+            model.FileErrors.Add(
+                "Không thể lưu tạm file CSV. Vui lòng thử lại.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            model.FileErrors.Add(
+                "Hệ thống không có quyền lưu file CSV.");
+        }
+
+        catch (InvalidDataException)
+{
+    model.FileErrors.Add(
+        "File CSV vượt quá dung lượng cho phép.");
+}
+    }
+
+    // 11. Hiển thị kết quả xem trước.
+    // Chưa ghi dữ liệu vào database.
     return View(model);
 }
+
+
+    // POST: /Admin/ConfirmImportStudents
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ConfirmImportStudents(
+        string? importToken,
+        [FromServices] StudentCsvPreviewService csvService,
+        [FromServices] StudentCsvTemporaryStorageService temporaryStorage)
+    {
+        if (string.IsNullOrWhiteSpace(importToken))
+        {
+            TempData["ErrorMessage"] =
+                "Không tìm thấy mã xác nhận nhập sinh viên.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+
+        // Xác định Admin từ cookie đăng nhập.
+        var adminIdText =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(adminIdText, out int adminId) ||
+            adminId <= 0)
+        {
+            return Unauthorized();
+        }
+
+        // Khóa toàn bộ quá trình xác nhận trong cùng ứng dụng.
+        using var confirmationLock =
+            await temporaryStorage.AcquireConfirmationLockAsync();
+
+        // Kiểm tra lại quyền Admin và trạng thái kích hoạt.
+        bool isActiveAdmin = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u =>
+                u.Id == adminId &&
+                u.Role == "Admin" &&
+                u.IsActive);
+
+        if (!isActiveAdmin)
+        {
+            return Forbid();
+        }
+
+        // Đọc lại file CSV đã lưu tạm.
+        await using var csvStream =
+            await temporaryStorage.OpenReadAsync(
+                importToken,
+                adminId);
+
+        if (csvStream == null)
+        {
+            TempData["ErrorMessage"] =
+                "File CSV đã hết hạn, không tồn tại hoặc không thuộc tài khoản này. " +
+                "Vui lòng tải lại file.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+
+        AdminStudentCsvPreviewViewModel preview;
+
+        try
+        {
+            preview = csvService.Preview(
+                csvStream,
+                "students.csv");
+        }
+        catch (IOException)
+        {
+            TempData["ErrorMessage"] =
+                "Không thể đọc file CSV đã lưu tạm.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+
+        // Nếu file không hợp lệ, không nhập bất kỳ tài khoản nào.
+        if (preview.FileErrors.Count > 0 ||
+            preview.Rows.Count == 0 ||
+            preview.Rows.Any(r => !r.IsValid))
+        {
+            TempData["ErrorMessage"] =
+                "File CSV không còn hợp lệ. Vui lòng tải lại và kiểm tra.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+
+        // Đối chiếu database lần cuối.
+        var existingUsers = await _db.Users
+            .AsNoTracking()
+            .Select(u => new
+            {
+                u.Email,
+                u.StudentCode
+            })
+            .ToListAsync();
+
+        var existingEmails = new HashSet<string>(
+            existingUsers.Select(u => u.Email.Trim()),
+            StringComparer.OrdinalIgnoreCase);
+
+        var existingStudentCodes = new HashSet<string>(
+            existingUsers
+                .Where(u => !string.IsNullOrWhiteSpace(u.StudentCode))
+                .Select(u => u.StudentCode!.Trim()),
+            StringComparer.OrdinalIgnoreCase);
+
+        bool hasDuplicate = preview.Rows.Any(row =>
+            existingEmails.Contains(row.Email) ||
+            existingStudentCodes.Contains(row.StudentCode));
+
+        if (hasDuplicate)
+        {
+            TempData["ErrorMessage"] =
+                "Một hoặc nhiều sinh viên đã tồn tại trong hệ thống. " +
+                "Vui lòng tải lại CSV để xem chi tiết.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+
+        // Tạo tài khoản chưa kích hoạt.
+        var passwordHasher = new PasswordHasher<User>();
+
+        var students = new List<User>();
+
+        foreach (var row in preview.Rows)
+        {
+            var student = new User
+            {
+                FullName = row.FullName,
+                Email = row.Email,
+                StudentCode = row.StudentCode,
+                ClassName = string.IsNullOrWhiteSpace(row.ClassName)
+                    ? null
+                    : row.ClassName,
+                Role = "Student",
+                IsActive = false
+            };
+
+            // Mật khẩu ngẫu nhiên riêng cho từng tài khoản.
+            // Không hiển thị hoặc lưu mật khẩu dạng văn bản.
+            var randomPassword = Convert.ToBase64String(
+                RandomNumberGenerator.GetBytes(32));
+
+            student.PasswordHash =
+                passwordHasher.HashPassword(
+                    student,
+                    randomPassword);
+
+            students.Add(student);
+        }
+
+        try
+        {
+            // Đảm bảo nhập toàn bộ hoặc không nhập gì.
+            await using var transaction =
+                await _db.Database.BeginTransactionAsync();
+
+            _db.Users.AddRange(students);
+
+            await _db.SaveChangesAsync();
+
+            await transaction.CommitAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi database khi Admin {AdminId} nhập CSV.",
+                adminId);
+
+            TempData["ErrorMessage"] =
+                "Không thể nhập sinh viên do dữ liệu trùng " +
+                "hoặc vi phạm ràng buộc database. " +
+                "Vui lòng kiểm tra danh sách tài khoản trước khi thử lại.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(
+                ex,
+                "Lỗi khi Admin {AdminId} nhập CSV.",
+                adminId);
+
+            TempData["ErrorMessage"] =
+                "Không thể xác nhận kết quả nhập sinh viên. " +
+                "Vui lòng kiểm tra danh sách tài khoản trước khi thử lại.";
+
+            return RedirectToAction(nameof(ImportStudents));
+        }
+
+        // MariaDB đã commit thành công. Việc cập nhật file JSON
+        // không thuộc transaction nên cần xử lý lỗi riêng.
+        try
+        {
+            await temporaryStorage.MarkCompletedAsync(importToken, adminId);
+
+            // Đóng luồng đọc trước khi xóa file CSV tạm.
+            await csvStream.DisposeAsync();
+            temporaryStorage.Delete(importToken);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException
+            or InvalidOperationException or System.Text.Json.JsonException)
+        {
+            _logger.LogWarning(ex,
+                "Đã nhập {Count} sinh viên nhưng chưa dọn được ImportToken của Admin {AdminId}.",
+                students.Count, adminId);
+
+            // Không báo nhập thất bại: transaction đã commit.
+            // Unique index tiếp tục bảo vệ khi token cũ bị gửi lại.
+        }
+
+        TempData["SuccessMessage"] =
+            $"Đã nhập thành công {students.Count} sinh viên. " +
+            "Các tài khoản đang ở trạng thái chưa kích hoạt.";
+
+        return RedirectToAction(nameof(Accounts));
+    }
 
 
 

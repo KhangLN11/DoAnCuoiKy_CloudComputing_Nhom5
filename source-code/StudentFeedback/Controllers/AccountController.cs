@@ -73,6 +73,15 @@ public class AccountController : Controller
             return View(model);
         }
 
+        if (!user.IsActive)
+{
+    ModelState.AddModelError(
+        "",
+        "Tài khoản chưa được kích hoạt. Vui lòng liên hệ quản trị viên.");
+
+    return View(model);
+}
+
         if (user.Role != "Student" && user.Role != "Admin")
         {
             ModelState.AddModelError(

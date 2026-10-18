@@ -18,6 +18,7 @@ public class AdminStudentCsvPreviewViewModel
 
     public List<string> FileErrors { get; set; }
         = new();
+    public string? ImportToken { get; set; }
 }
 
 public class AdminStudentCsvRowViewModel

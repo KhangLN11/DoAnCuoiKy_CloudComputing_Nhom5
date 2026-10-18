@@ -167,10 +167,49 @@
 
             </div>
 
-            <div class="student-import-warning">
-                Đây chỉ là bản xem trước.
-                Chưa có tài khoản nào được tạo.
-            </div>
+            
+@if (Model.FileErrors.Count == 0 &&
+     Model.TotalRows > 0 &&
+     Model.InvalidRows == 0 &&
+     !string.IsNullOrWhiteSpace(Model.ImportToken))
+{
+    <div class="student-import-warning">
+        <strong>File CSV đã vượt qua bước kiểm tra.</strong>
+        <p>
+            Có @Model.ValidRows sinh viên hợp lệ,
+            sẵn sàng để nhập vào hệ thống.
+        </p>
+        <p>
+            Chưa có tài khoản nào được tạo.
+        </p>
+    </div>
+
+    <form asp-controller="Admin"
+          asp-action="ConfirmImportStudents"
+          method="post">
+
+        @Html.AntiForgeryToken()
+
+        <input type="hidden"
+               name="importToken"
+               value="@Model.ImportToken" />
+
+        <button type="submit"
+        class="student-import-button">
+    Xác nhận nhập @Model.ValidRows sinh viên
+</button>
+    </form>
+}
+else
+{
+    <div class="student-import-warning">
+        Đây chỉ là bản xem trước.
+        Chưa có tài khoản nào được tạo.
+        Vui lòng sửa các dòng không hợp lệ
+        và tải lại file CSV.
+    </div>
+}
+
 
         </section>
     }

@@ -31,4 +31,7 @@ public class AdminAccountItemViewModel
     public string? StudentCode { get; set; }
 
     public string? ClassName { get; set; }
+
+    // Trạng thái kích hoạt tài khoản.
+    public bool IsActive { get; set; }
 }

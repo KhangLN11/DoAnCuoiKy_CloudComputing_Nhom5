@@ -4,6 +4,9 @@
 @{
     ViewData["Title"] = "Quản lý tài khoản";
     Layout = "_AdminLayout";
+
+    var inactiveStudentCount = Model.Accounts.Count(
+        a => a.Role == "Student" && !a.IsActive);
 }
 
 <div class="accounts-page">
@@ -13,18 +16,37 @@
         <div>
             <h1>Quản lý tài khoản</h1>
             <p>
-                Theo dõi thông tin và vai trò của các
-                tài khoản trong hệ thống.
+                Theo dõi thông tin, vai trò và trạng thái
+                kích hoạt tài khoản trong hệ thống.
             </p>
 
             <a asp-controller="Admin"
-   asp-action="ImportStudents"
-   class="student-import-button"
-   style="display:inline-block; text-decoration:none; margin-top:16px;">
-    Nhập danh sách sinh viên (CSV)
-</a>
+               asp-action="ImportStudents"
+               class="student-import-button"
+               style="display:inline-block; text-decoration:none; margin-top:16px;">
+                Nhập danh sách sinh viên (CSV)
+            </a>
         </div>
     </div>
+
+    <!-- Thông báo -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success"
+             role="alert"
+             style="margin:16px 0; padding:12px; border-radius:8px;">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger"
+             role="alert"
+             style="margin:16px 0; padding:12px; border-radius:8px;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
 
     <!-- Thống kê tài khoản -->
     <div class="accounts-stats">
@@ -33,7 +55,6 @@
             <div class="accounts-stat-label">
                 Tổng tài khoản
             </div>
-
             <div class="accounts-stat-value">
                 @Model.TotalAccounts
             </div>
@@ -43,7 +64,6 @@
             <div class="accounts-stat-label">
                 Tài khoản sinh viên
             </div>
-
             <div class="accounts-stat-value">
                 @Model.TotalStudents
             </div>
@@ -53,7 +73,6 @@
             <div class="accounts-stat-label">
                 Tài khoản quản trị viên
             </div>
-
             <div class="accounts-stat-value">
                 @Model.TotalAdmins
             </div>
@@ -74,56 +93,88 @@
             </div>
         </div>
 
+        <!-- Thông báo kích hoạt qua email -->
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:12px;
+            padding:16px;
+            margin:16px 0;
+            border:1px solid #bfdbfe;
+            border-radius:10px;
+            background:#eff6ff;">
+
+            <div>
+                <strong style="color:#1d4ed8;">
+                    Kích hoạt tài khoản qua email
+                </strong>
+
+                <p style="margin:8px 0; color:#475569;">
+                    Sinh viên chưa kích hoạt sẽ nhận liên kết
+                    thiết lập mật khẩu qua email.
+                    Tài khoản chỉ được kích hoạt sau khi
+                    thiết lập mật khẩu thành công.
+                </p>
+
+                <small style="color:#64748b;">
+                    Đang hiển thị @inactiveStudentCount
+                    sinh viên chưa kích hoạt trong danh sách hiện tại.
+                </small>
+
+                <p style="margin:8px 0 0; color:#92400e; font-size:13px;">
+                    Hiện đang ở chế độ kiểm thử:
+                    chỉ gửi email đến địa chỉ được cấu hình trước.
+                    Chức năng kích hoạt hàng loạt đã tạm khóa.
+                </p>
+            </div>
+
+        </div>
+
         <!-- Tìm kiếm và lọc -->
-        <form
-            asp-controller="Admin"
-            asp-action="Accounts"
-            method="get"
-            class="accounts-filter-form">
+        <form asp-controller="Admin"
+              asp-action="Accounts"
+              method="get"
+              class="accounts-filter-form">
 
-            <input
-                type="text"
-                name="search"
-                value="@Model.Search"
-                placeholder="Tìm theo họ tên, email hoặc mã sinh viên..."
-                class="accounts-search-input"
-                maxlength="255" />
+            <input type="text"
+                   name="search"
+                   value="@Model.Search"
+                   placeholder="Tìm theo họ tên, email hoặc mã sinh viên..."
+                   class="accounts-search-input"
+                   maxlength="255" />
 
-            <select
-                name="roleFilter"
-                class="accounts-role-select">
+            <select name="roleFilter"
+                    class="accounts-role-select">
 
                 <option value="">
                     Tất cả vai trò
                 </option>
 
-                <option
-                    value="Student"
-                    selected="@(Model.RoleFilter == "Student")">
+                <option value="Student"
+                        selected="@(Model.RoleFilter == "Student")">
                     Sinh viên
                 </option>
 
-                <option
-                    value="Admin"
-                    selected="@(Model.RoleFilter == "Admin")">
+                <option value="Admin"
+                        selected="@(Model.RoleFilter == "Admin")">
                     Quản trị viên
                 </option>
 
             </select>
 
-            <button
-                type="submit"
-                class="accounts-search-button">
+            <button type="submit"
+                    class="accounts-search-button">
                 Tìm kiếm
             </button>
 
             @if (!string.IsNullOrWhiteSpace(Model.Search) ||
                  !string.IsNullOrWhiteSpace(Model.RoleFilter))
             {
-                <a
-                    asp-controller="Admin"
-                    asp-action="Accounts"
-                    class="accounts-reset-button">
+                <a asp-controller="Admin"
+                   asp-action="Accounts"
+                   class="accounts-reset-button">
                     Xóa lọc
                 </a>
             }
@@ -143,6 +194,8 @@
                         <th>Vai trò</th>
                         <th>Mã sinh viên</th>
                         <th>Lớp</th>
+                        <th>Trạng thái</th>
+                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -151,7 +204,7 @@
                     @if (Model.Accounts.Count == 0)
                     {
                         <tr>
-                            <td colspan="6" class="accounts-empty">
+                            <td colspan="8" class="accounts-empty">
                                 Không tìm thấy tài khoản phù hợp.
                             </td>
                         </tr>
@@ -161,10 +214,7 @@
                         @foreach (var account in Model.Accounts)
                         {
                             <tr>
-
-                                <td>
-                                    @account.Id
-                                </td>
+                                <td>@account.Id</td>
 
                                 <td>
                                     <span class="accounts-name">
@@ -172,9 +222,7 @@
                                     </span>
                                 </td>
 
-                                <td>
-                                    @account.Email
-                                </td>
+                                <td>@account.Email</td>
 
                                 <td>
                                     @if (account.Role == "Admin")
@@ -209,6 +257,82 @@
                                         : account.ClassName)
                                 </td>
 
+                                <td>
+                                    @if (account.IsActive)
+                                    {
+                                        <span style="
+                                            display:inline-block;
+                                            padding:6px 10px;
+                                            border-radius:20px;
+                                            background:#dcfce7;
+                                            color:#166534;
+                                            font-weight:600;
+                                            white-space:nowrap;">
+                                            Đã kích hoạt
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="
+                                            display:inline-block;
+                                            padding:6px 10px;
+                                            border-radius:20px;
+                                            background:#fef3c7;
+                                            color:#92400e;
+                                            font-weight:600;
+                                            white-space:nowrap;">
+                                            Chưa kích hoạt
+                                        </span>
+                                    }
+                                </td>
+
+                                <!-- Thao tác -->
+                                <td>
+                                    @if (account.Role == "Student" &&
+                                         !account.IsActive)
+                                    {
+                                        <form asp-controller="AdminPasswordSetup"
+                                              asp-action="SendTestEmail"
+                                              method="post"
+                                              onsubmit="return confirm('Gửi email thiết lập mật khẩu cho sinh viên này?');">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="studentId"
+                                                   value="@account.Id" />
+
+                                            <button type="submit"
+                                                    style="
+                                                        padding:9px 12px;
+                                                        border:none;
+                                                        border-radius:7px;
+                                                        background:#2563eb;
+                                                        color:white;
+                                                        font-size:13px;
+                                                        font-weight:600;
+                                                        cursor:pointer;
+                                                        white-space:nowrap;">
+                                                Gửi email thiết lập mật khẩu
+                                            </button>
+                                        </form>
+                                    }
+                                    else if (account.Role == "Student")
+                                    {
+                                        <span style="
+                                            color:#15803d;
+                                            font-size:13px;
+                                            font-weight:600;">
+                                            Đã hoàn tất
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color:#94a3b8;">
+                                            —
+                                        </span>
+                                    }
+                                </td>
                             </tr>
                         }
                     }

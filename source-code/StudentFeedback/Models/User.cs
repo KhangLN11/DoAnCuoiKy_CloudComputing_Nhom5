@@ -29,4 +29,8 @@ public class User
 
     [StringLength(100)]
     public string? ClassName { get; set; }
+
+    // Tài khoản hiện có mặc định được xem là đã kích hoạt.
+    // Khi import CSV, tài khoản mới sẽ được tạo với IsActive = false.
+    public bool IsActive { get; set; } = true;
 }
