@@ -83,41 +83,6 @@ namespace StudentFeedback.Migrations
                     b.ToTable("Categories");
                 });
 
-            modelBuilder.Entity("StudentFeedback.Models.PasswordSetupToken", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("ExpiresAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("TokenHash")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<DateTime?>("UsedAtUtc")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TokenHash")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("PasswordSetupTokens");
-                });
-
             modelBuilder.Entity("StudentFeedback.Models.Reflection", b =>
                 {
                     b.Property<int>("Id")
@@ -251,17 +216,6 @@ namespace StudentFeedback.Migrations
                         .IsRequired();
 
                     b.Navigation("Reflection");
-                });
-
-            modelBuilder.Entity("StudentFeedback.Models.PasswordSetupToken", b =>
-                {
-                    b.HasOne("StudentFeedback.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StudentFeedback.Models.Reflection", b =>

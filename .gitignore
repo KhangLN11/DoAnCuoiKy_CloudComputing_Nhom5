@@ -484,3 +484,6 @@ $RECYCLE.BIN/
 *.swp
 
 **/migration_auth_preview.sql
+
+# Temporary student CSV imports
+**/App_Data/StudentCsvImports/

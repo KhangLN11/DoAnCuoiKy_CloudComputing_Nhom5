@@ -12,11 +12,6 @@ builder.Services.AddControllersWithViews();
 // CSV Services
 builder.Services.AddScoped<StudentCsvPreviewService>();
 builder.Services.AddSingleton<StudentCsvTemporaryStorageService>();
-builder.Services.AddScoped<PasswordSetupTokenService>();
-builder.Services.Configure<SmtpOptions>(
-    builder.Configuration.GetSection("Smtp"));
-
-builder.Services.AddScoped<EmailSenderService>();
 
 // Database
 var connectionString = builder.Configuration

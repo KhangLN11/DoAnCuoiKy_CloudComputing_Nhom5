@@ -27,16 +27,73 @@ public AdminController(
     _logger = logger;
 }
 
+    
     // GET: /Admin/Index
-    // Trang Dashboard
+    // Dashboard sử dụng dữ liệu thật từ MariaDB
     [HttpGet]
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        return View();
+        var reflections = _db.Reflections.AsNoTracking();
+
+        // 1. Thống kê tổng quan
+        var model = new AdminDashboardViewModel
+        {
+            TotalReflections = await reflections.CountAsync(),
+
+            PendingCount = await reflections.CountAsync(
+                r => r.Status == "Pending"),
+
+            InProgressCount = await reflections.CountAsync(
+                r => r.Status == "InProgress"),
+
+            ResolvedCount = await reflections.CountAsync(
+                r => r.Status == "Resolved"),
+
+            ClosedCount = await reflections.CountAsync(
+                r => r.Status == "Closed")
+        };
+
+        // 2. Thống kê số phản ánh theo danh mục
+        model.CategoryStatistics = await _db.Categories
+            .AsNoTracking()
+            .Select(c => new AdminDashboardCategoryItemViewModel
+            {
+                CategoryId = c.Id,
+                CategoryName = c.Name,
+                ReflectionCount = _db.Reflections.Count(
+                    r => r.CategoryId == c.Id)
+            })
+            .OrderByDescending(c => c.ReflectionCount)
+            .ThenBy(c => c.CategoryName)
+            .ToListAsync();
+
+        // 3. Lấy 10 phản ánh mới nhất
+        model.RecentReflections = await _db.Reflections
+            .AsNoTracking()
+            .OrderByDescending(r => r.CreatedAt)
+            .ThenByDescending(r => r.Id)
+            .Take(10)
+            .Select(r => new AdminDashboardRecentReflectionViewModel
+            {
+                Id = r.Id,
+                StudentName = r.User != null
+                    ? r.User.FullName
+                    : "Không xác định",
+
+                Title = r.Title,
+
+                CategoryName = r.Category != null
+                    ? r.Category.Name
+                    : "Không xác định",
+
+                Status = r.Status,
+                CreatedAt = r.CreatedAt
+            })
+            .ToListAsync();
+
+        return View(model);
     }
 
-    // GET: /Admin/Reflections
-    // Quản lý phản ánh - sẽ triển khai sau
     
 [HttpGet]
 public async Task<IActionResult> Reflections(
@@ -352,11 +409,29 @@ public async Task<IActionResult> Reflections(
     
 [HttpPost]
 [ValidateAntiForgeryToken]
-public IActionResult ActivateAllStudents()
+public async Task<IActionResult> ActivateAllStudents()
 {
-    TempData["ErrorMessage"] =
-        "Chức năng kích hoạt hàng loạt đang tạm khóa. " +
-        "Sinh viên sẽ được kích hoạt sau khi thiết lập mật khẩu thành công.";
+    var adminIdText = User.FindFirstValue(ClaimTypes.NameIdentifier);
+    if (!int.TryParse(adminIdText, out int adminId) || adminId <= 0)
+    {
+        return Unauthorized();
+    }
+
+    bool isActiveAdmin = await _db.Users.AsNoTracking().AnyAsync(u =>
+        u.Id == adminId && u.Role == "Admin" && u.IsActive);
+    if (!isActiveAdmin)
+    {
+        return Forbid();
+    }
+
+    int activatedCount = await _db.Users
+        .Where(u => u.Role == "Student" && !u.IsActive)
+        .ExecuteUpdateAsync(setters => setters
+            .SetProperty(u => u.IsActive, true));
+
+    TempData["SuccessMessage"] = activatedCount == 0
+        ? "Không có tài khoản sinh viên nào cần kích hoạt."
+        : $"Đã kích hoạt thành công {activatedCount} tài khoản sinh viên.";
 
     return RedirectToAction(nameof(Accounts));
 }
@@ -1068,15 +1143,17 @@ public async Task<IActionResult> ImportStudents(
                 IsActive = false
             };
 
-            // Mật khẩu ngẫu nhiên riêng cho từng tài khoản.
-            // Không hiển thị hoặc lưu mật khẩu dạng văn bản.
-            var randomPassword = Convert.ToBase64String(
-                RandomNumberGenerator.GetBytes(32));
+            
+            // Mật khẩu ban đầu cho tài khoản sinh viên demo:
+            // Mã sinh viên + ký tự @.
+            // Chỉ lưu mật khẩu đã băm vào database.
+            var initialPassword = row.StudentCode + "@";
 
             student.PasswordHash =
                 passwordHasher.HashPassword(
                     student,
-                    randomPassword);
+                    initialPassword);
+
 
             students.Add(student);
         }

@@ -22,10 +22,6 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Attachment> Attachments => Set<Attachment>();
 
-    // Token thiết lập mật khẩu lần đầu.
-    public DbSet<PasswordSetupToken> PasswordSetupTokens =>
-        Set<PasswordSetupToken>();
-
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
@@ -41,48 +37,35 @@ public class ApplicationDbContext : DbContext
             .HasIndex(u => u.StudentCode)
             .IsUnique();
 
-        // Cấu hình bảng PasswordSetupTokens.
-        modelBuilder.Entity<PasswordSetupToken>(entity =>
-        {
-            entity.HasKey(t => t.Id);
-
-            // Không cho phép hai token có cùng mã băm.
-            entity.HasIndex(t => t.TokenHash)
-                .IsUnique();
-
-            // Hỗ trợ tìm token theo sinh viên.
-            entity.HasIndex(t => t.UserId);
-
-            entity.HasOne(t => t.User)
-                .WithMany()
-                .HasForeignKey(t => t.UserId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
-
+        // Quan hệ Reflection - User
         modelBuilder.Entity<Reflection>()
             .HasOne(r => r.User)
             .WithMany()
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Quan hệ Reflection - Category
         modelBuilder.Entity<Reflection>()
             .HasOne(r => r.Category)
             .WithMany()
             .HasForeignKey(r => r.CategoryId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Quan hệ Response - Reflection
         modelBuilder.Entity<Response>()
             .HasOne(r => r.Reflection)
             .WithMany()
             .HasForeignKey(r => r.ReflectionId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Quan hệ Response - User
         modelBuilder.Entity<Response>()
             .HasOne(r => r.User)
             .WithMany()
             .HasForeignKey(r => r.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        // Quan hệ Attachment - Reflection
         modelBuilder.Entity<Attachment>()
             .HasOne(a => a.Reflection)
             .WithMany()

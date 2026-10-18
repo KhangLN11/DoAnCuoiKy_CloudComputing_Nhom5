@@ -93,7 +93,7 @@
             </div>
         </div>
 
-        <!-- Thông báo kích hoạt qua email -->
+        <!-- Thông tin tài khoản sinh viên -->
         <div style="
             display:flex;
             justify-content:space-between;
@@ -102,20 +102,20 @@
             gap:12px;
             padding:16px;
             margin:16px 0;
-            border:1px solid #bfdbfe;
+            border:1px solid #cbd5e1;
             border-radius:10px;
-            background:#eff6ff;">
+            background:#f8fafc;">
 
             <div>
-                <strong style="color:#1d4ed8;">
-                    Kích hoạt tài khoản qua email
+                <strong style="color:#334155;">
+                    Quản lý tài khoản sinh viên
                 </strong>
 
                 <p style="margin:8px 0; color:#475569;">
-                    Sinh viên chưa kích hoạt sẽ nhận liên kết
-                    thiết lập mật khẩu qua email.
-                    Tài khoản chỉ được kích hoạt sau khi
-                    thiết lập mật khẩu thành công.
+                    Tài khoản sinh viên được tạo khi
+                    quản trị viên nhập danh sách CSV.
+                    Trạng thái kích hoạt được quản lý
+                    trong hệ thống.
                 </p>
 
                 <small style="color:#64748b;">
@@ -123,14 +123,81 @@
                     sinh viên chưa kích hoạt trong danh sách hiện tại.
                 </small>
 
-                <p style="margin:8px 0 0; color:#92400e; font-size:13px;">
-                    Hiện đang ở chế độ kiểm thử:
-                    chỉ gửi email đến địa chỉ được cấu hình trước.
-                    Chức năng kích hoạt hàng loạt đã tạm khóa.
+                <p style="margin:8px 0 0; color:#64748b; font-size:13px;">
+                    Chức năng thiết lập mật khẩu qua email
+                    đã được loại bỏ. Quy trình cấp mật khẩu
+                    ban đầu đang được cập nhật cho môi trường demo.
                 </p>
             </div>
 
         </div>
+
+        
+<!-- Quản lý kích hoạt tài khoản sinh viên -->
+<div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+    padding:16px;
+    margin:16px 0;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    background:#f8fafc;">
+
+    <div style="flex:1; min-width:240px;">
+
+        <strong style="color:#334155;">
+            Quản lý kích hoạt tài khoản sinh viên
+        </strong>
+
+        <p style="margin:8px 0; color:#475569;">
+            Tài khoản sinh viên được tạo khi quản trị viên
+            nhập danh sách CSV. Quản trị viên có thể kích hoạt
+            đồng loạt các tài khoản chưa kích hoạt.
+        </p>
+
+        <small style="color:#64748b;">
+            Đang hiển thị @inactiveStudentCount sinh viên
+            chưa kích hoạt trong danh sách hiện tại.
+        </small>
+
+        <p style="
+            margin:8px 0 0;
+            color:#64748b;
+            font-size:13px;">
+            Lưu ý: Kích hoạt tài khoản không thay đổi mật khẩu.
+            Mật khẩu ban đầu cho tài khoản demo sẽ được
+            cấu hình ở giai đoạn tiếp theo.
+        </p>
+
+    </div>
+
+    <form asp-controller="Admin"
+          asp-action="ActivateAllStudents"
+          method="post"
+          onsubmit="return confirm('Bạn có chắc chắn muốn kích hoạt tất cả tài khoản sinh viên chưa kích hoạt?');">
+
+        @Html.AntiForgeryToken()
+
+        <button type="submit"
+                style="
+                    padding:11px 18px;
+                    border:0;
+                    border-radius:8px;
+                    background:#2563eb;
+                    color:white;
+                    font-weight:600;
+                    cursor:pointer;
+                    white-space:nowrap;">
+            Kích hoạt tất cả sinh viên
+        </button>
+
+    </form>
+
+</div>
+
 
         <!-- Tìm kiếm và lọc -->
         <form asp-controller="Admin"
@@ -195,7 +262,6 @@
                         <th>Mã sinh viên</th>
                         <th>Lớp</th>
                         <th>Trạng thái</th>
-                        <th>Thao tác</th>
                     </tr>
                 </thead>
 
@@ -204,7 +270,7 @@
                     @if (Model.Accounts.Count == 0)
                     {
                         <tr>
-                            <td colspan="8" class="accounts-empty">
+                            <td colspan="7" class="accounts-empty">
                                 Không tìm thấy tài khoản phù hợp.
                             </td>
                         </tr>
@@ -282,54 +348,6 @@
                                             font-weight:600;
                                             white-space:nowrap;">
                                             Chưa kích hoạt
-                                        </span>
-                                    }
-                                </td>
-
-                                <!-- Thao tác -->
-                                <td>
-                                    @if (account.Role == "Student" &&
-                                         !account.IsActive)
-                                    {
-                                        <form asp-controller="AdminPasswordSetup"
-                                              asp-action="SendTestEmail"
-                                              method="post"
-                                              onsubmit="return confirm('Gửi email thiết lập mật khẩu cho sinh viên này?');">
-
-                                            @Html.AntiForgeryToken()
-
-                                            <input type="hidden"
-                                                   name="studentId"
-                                                   value="@account.Id" />
-
-                                            <button type="submit"
-                                                    style="
-                                                        padding:9px 12px;
-                                                        border:none;
-                                                        border-radius:7px;
-                                                        background:#2563eb;
-                                                        color:white;
-                                                        font-size:13px;
-                                                        font-weight:600;
-                                                        cursor:pointer;
-                                                        white-space:nowrap;">
-                                                Gửi email thiết lập mật khẩu
-                                            </button>
-                                        </form>
-                                    }
-                                    else if (account.Role == "Student")
-                                    {
-                                        <span style="
-                                            color:#15803d;
-                                            font-size:13px;
-                                            font-weight:600;">
-                                            Đã hoàn tất
-                                        </span>
-                                    }
-                                    else
-                                    {
-                                        <span style="color:#94a3b8;">
-                                            —
                                         </span>
                                     }
                                 </td>
