@@ -1,0 +1,295 @@
+
+@model StudentFeedback.Models.ViewModels.AdminReflectionDetailViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết phản ánh";
+    Layout = "_AdminLayout";
+
+    var item = Model.Reflection;
+
+    string statusLabel = item.Status switch
+    {
+        "Pending" => "Chờ xử lý",
+        "InProgress" => "Đang xử lý",
+        "Resolved" => "Đã giải quyết",
+        "Closed" => "Đã đóng",
+        _ => item.Status
+    };
+
+    string statusClass = item.Status switch
+    {
+        "Pending" => "pending",
+        "InProgress" => "in-progress",
+        "Resolved" => "resolved",
+        "Closed" => "closed",
+        _ => "closed"
+    };
+}
+
+
+@if (TempData["SuccessMessage"] is string successMessage)
+{
+    <div class="admin-success-message" role="status">
+        @successMessage
+    </div>
+}
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="admin-error-message" role="alert">
+        @errorMessage
+    </div>
+}
+
+
+<div class="category-header">
+    <div>
+        <h1>Chi tiết phản ánh #@item.Id</h1>
+        <p>Thông tin phản ánh và quá trình phản hồi</p>
+    </div>
+
+    <a asp-controller="Admin"
+       asp-action="Reflections"
+       class="btn-cancel">
+        ← Quay lại
+    </a>
+</div>
+
+<div class="reflection-detail-grid">
+
+    <div>
+        <section class="panel">
+            <div class="reflection-detail-heading">
+                <h2>@item.Title</h2>
+
+                <span class="status-badge @statusClass">
+                    @statusLabel
+                </span>
+            </div>
+
+            <div class="reflection-content">
+                @item.Content
+            </div>
+
+            <div class="reflection-date">
+                <p>
+                    <strong>Ngày tạo:</strong>
+                    @item.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                    (UTC)
+                </p>
+
+                @if (item.UpdatedAt.HasValue)
+                {
+                    <p>
+                        <strong>Cập nhật:</strong>
+                        @item.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm")
+                        (UTC)
+                    </p>
+                }
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>Phản hồi (@Model.Responses.Count)</h2>
+
+            @if (Model.Responses.Count == 0)
+            {
+                <p class="detail-empty">
+                    Chưa có phản hồi nào.
+                </p>
+            }
+            else
+            {
+                @foreach (var response in Model.Responses)
+                {
+                    <div class="response-item">
+                        <div class="response-header">
+                            <strong>
+                                @(response.User?.FullName ?? "Không xác định")
+                            </strong>
+
+                            <span>
+                                @response.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                (UTC)
+                            </span>
+                        </div>
+
+                        <div class="response-content">
+                            @response.Content
+                        </div>
+                    </div>
+                }
+            }
+        </section>
+
+        <section class="panel">
+            <h2>Gửi phản hồi cho sinh viên</h2>
+
+            <p class="reply-description">
+                Nội dung phản hồi sẽ được lưu vào hệ thống
+                và gắn với tài khoản Admin đang đăng nhập.
+            </p>
+
+            <form asp-controller="Admin"
+                  asp-action="ReflectionReply"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="ReflectionId"
+                       value="@item.Id" />
+
+                <div class="form-group">
+                    <label for="ReplyContent">
+                        Nội dung phản hồi
+                        <span class="required-mark">*</span>
+                    </label>
+
+                    <textarea id="ReplyContent"
+                              name="Content"
+                              class="form-control"
+                              rows="6"
+                              maxlength="4000"
+                              required
+                              placeholder="Nhập nội dung phản hồi cho sinh viên..."></textarea>
+
+                    <small class="reply-hint">
+                        Tối đa 4000 ký tự.
+                    </small>
+                </div>
+
+                <button type="submit"
+                        class="btn-save reply-submit">
+                    Gửi phản hồi
+                </button>
+            </form>
+        </section>
+
+
+        <section class="panel">
+            <h2>Tệp đính kèm (@Model.Attachments.Count)</h2>
+
+            @if (Model.Attachments.Count == 0)
+            {
+                <p class="detail-empty">
+                    Không có tệp đính kèm.
+                </p>
+            }
+            else
+            {
+                @foreach (var attachment in Model.Attachments)
+                {
+                    <div class="attachment-item">
+                        <strong>@attachment.FileName</strong>
+
+                        <span>
+                            @((attachment.FileSize / 1024.0).ToString("N1"))
+                            KB
+                        </span>
+                    </div>
+                }
+            }
+
+            <p class="attachment-note">
+                Chức năng tải tệp sẽ được kết nối khi
+                hoàn thiện cơ chế lưu trữ tệp.
+            </p>
+        </section>
+    </div>
+
+    <aside>
+        <section class="panel">
+            <h2>Thông tin sinh viên</h2>
+
+            <dl class="detail-info">
+                <dt>Họ tên</dt>
+                <dd>@(item.User?.FullName ?? "Không xác định")</dd>
+
+                <dt>Email</dt>
+                <dd>@(item.User?.Email ?? "Không xác định")</dd>
+
+                <dt>Mã sinh viên</dt>
+                <dd>@(item.User?.StudentCode ?? "Chưa cập nhật")</dd>
+
+                <dt>Lớp</dt>
+                <dd>@(item.User?.ClassName ?? "Chưa cập nhật")</dd>
+            </dl>
+        </section>
+
+        <section class="panel">
+            <h2>Phân loại</h2>
+
+            <dl class="detail-info">
+                <dt>Danh mục</dt>
+                <dd>@(item.Category?.Name ?? "Không xác định")</dd>
+
+                <dt>Trạng thái</dt>
+                <dd>
+                    <span class="status-badge @statusClass">
+                        @statusLabel
+                    </span>
+                </dd>
+            </dl>
+        </section>
+
+        <section class="panel">
+            <h2>Cập nhật trạng thái</h2>
+
+            <p class="status-form-description">
+                Chọn trạng thái xử lý mới cho phản ánh này.
+            </p>
+
+            <form asp-controller="Admin"
+                  asp-action="ReflectionUpdateStatus"
+                  method="post">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="ReflectionId"
+                       value="@item.Id" />
+
+                <div class="form-group">
+                    <label for="Status">
+                        Trạng thái
+                    </label>
+
+                    <select id="Status"
+                            name="Status"
+                            class="form-control"
+                            required>
+
+                        <option value="Pending"
+                                selected="@(item.Status == "Pending")">
+                            Chờ xử lý
+                        </option>
+
+                        <option value="InProgress"
+                                selected="@(item.Status == "InProgress")">
+                            Đang xử lý
+                        </option>
+
+                        <option value="Resolved"
+                                selected="@(item.Status == "Resolved")">
+                            Đã giải quyết
+                        </option>
+
+                        <option value="Closed"
+                                selected="@(item.Status == "Closed")">
+                            Đã đóng
+                        </option>
+
+                    </select>
+                </div>
+
+                <button type="submit"
+                        class="btn-save status-submit">
+                    Lưu trạng thái
+                </button>
+            </form>
+        </section>
+
+    </aside>
+
+</div>

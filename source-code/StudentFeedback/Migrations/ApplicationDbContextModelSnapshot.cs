@@ -179,6 +179,9 @@ namespace StudentFeedback.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -196,6 +199,9 @@ namespace StudentFeedback.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
+                        .IsUnique();
+
+                    b.HasIndex("StudentCode")
                         .IsUnique();
 
                     b.ToTable("Users");

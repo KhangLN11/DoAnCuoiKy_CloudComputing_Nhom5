@@ -1,0 +1,184 @@
+
+@model StudentFeedback.Models.ViewModels.AdminStudentDetailViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết sinh viên";
+    Layout = "_AdminLayout";
+}
+
+<div class="student-detail-page">
+
+    <div class="student-detail-header">
+        <div>
+            <a asp-controller="Admin"
+               asp-action="Students"
+               class="student-back-link">
+                ← Quay lại danh sách sinh viên
+            </a>
+
+            <h1>Chi tiết sinh viên</h1>
+            <p>Thông tin tài khoản và lịch sử phản ánh.</p>
+        </div>
+    </div>
+
+    <!-- Thông tin sinh viên -->
+    <section class="student-detail-panel">
+        <h2>Thông tin sinh viên</h2>
+
+        <div class="student-info-grid">
+            <div class="student-info-item">
+                <span>Họ và tên</span>
+                <strong>@Model.FullName</strong>
+            </div>
+
+            <div class="student-info-item">
+                <span>Mã sinh viên</span>
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.StudentCode)
+                        ? "Chưa cập nhật"
+                        : Model.StudentCode)
+                </strong>
+            </div>
+
+            <div class="student-info-item">
+                <span>Email</span>
+                <strong>@Model.Email</strong>
+            </div>
+
+            <div class="student-info-item">
+                <span>Lớp</span>
+                <strong>
+                    @(string.IsNullOrWhiteSpace(Model.ClassName)
+                        ? "Chưa cập nhật"
+                        : Model.ClassName)
+                </strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- Thống kê phản ánh -->
+    <div class="student-detail-stats">
+
+        <div class="student-detail-stat-card">
+            <span>Tổng phản ánh</span>
+            <strong>@Model.TotalReflections</strong>
+        </div>
+
+        <div class="student-detail-stat-card">
+            <span>Chờ xử lý</span>
+            <strong>@Model.PendingCount</strong>
+        </div>
+
+        <div class="student-detail-stat-card">
+            <span>Đang xử lý</span>
+            <strong>@Model.InProgressCount</strong>
+        </div>
+
+        <div class="student-detail-stat-card">
+            <span>Đã giải quyết</span>
+            <strong>@Model.ResolvedCount</strong>
+        </div>
+
+        <div class="student-detail-stat-card">
+            <span>Đã đóng</span>
+            <strong>@Model.ClosedCount</strong>
+        </div>
+
+    </div>
+
+    <!-- Lịch sử phản ánh -->
+    <section class="student-detail-panel">
+
+        <div class="student-history-header">
+            <h2>Lịch sử phản ánh</h2>
+            <p>
+                Các phản ánh đã được sinh viên gửi
+                trong hệ thống.
+            </p>
+        </div>
+
+        <div class="student-history-table-wrapper">
+            <table class="student-history-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tiêu đề</th>
+                        <th>Danh mục</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày gửi</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Reflections.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="6"
+                                class="student-history-empty">
+                                Sinh viên chưa gửi phản ánh nào.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Reflections)
+                        {
+                            string statusText = item.Status switch
+                            {
+                                "Pending" => "Chờ xử lý",
+                                "InProgress" => "Đang xử lý",
+                                "Resolved" => "Đã giải quyết",
+                                "Closed" => "Đã đóng",
+                                _ => item.Status
+                            };
+
+                            string statusClass = item.Status switch
+                            {
+                                "Pending" => "pending",
+                                "InProgress" => "in-progress",
+                                "Resolved" => "resolved",
+                                "Closed" => "closed",
+                                _ => "unknown"
+                            };
+
+                            <tr>
+                                <td>@item.Id</td>
+
+                                <td>
+                                    <span class="student-history-title">
+                                        @item.Title
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @(item.Category?.Name ?? "Chưa xác định")
+                                </td>
+
+                                <td>
+                                    <span class="student-history-status @statusClass">
+                                        @statusText
+                                    </span>
+                                </td>
+
+                                <td>
+                                    @item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                </td>
+
+                                <td>
+                                    <a asp-controller="Admin"
+                                       asp-action="ReflectionDetails"
+                                       asp-route-id="@item.Id"
+                                       class="student-history-link">
+                                        Xem chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+    </section>
+</div>

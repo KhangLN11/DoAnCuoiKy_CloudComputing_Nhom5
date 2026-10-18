@@ -1,0 +1,187 @@
+
+@model StudentFeedback.Models.ViewModels.AdminStudentListViewModel
+
+@{
+    ViewData["Title"] = "Quản lý sinh viên";
+    Layout = "_AdminLayout";
+}
+
+<div class="students-page">
+
+    <!-- Tiêu đề trang -->
+    <div class="students-page-header">
+        <div>
+            <h1>Quản lý sinh viên</h1>
+            <p>
+                Theo dõi thông tin sinh viên và số lượng
+                phản ánh đã gửi trong hệ thống.
+            </p>
+        </div>
+    </div>
+
+    <!-- Thống kê -->
+    <div class="students-stats">
+
+        <div class="students-stat-card">
+            <div class="students-stat-label">
+                Tổng số sinh viên
+            </div>
+
+            <div class="students-stat-value">
+                @Model.TotalStudents
+            </div>
+        </div>
+
+        <div class="students-stat-card">
+            <div class="students-stat-label">
+                Tổng số phản ánh của sinh viên
+            </div>
+
+            <div class="students-stat-value">
+                @Model.TotalReflections
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Danh sách sinh viên -->
+    <section class="students-panel">
+
+        <div class="students-panel-header">
+            <div>
+                <h2>Danh sách sinh viên</h2>
+                <p>
+                    Hiển thị @Model.Students.Count sinh viên
+                    theo điều kiện tìm kiếm.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tìm kiếm -->
+        <form
+            asp-controller="Admin"
+            asp-action="Students"
+            method="get"
+            class="students-search-form">
+
+            <input
+                type="text"
+                name="search"
+                value="@Model.Search"
+                placeholder="Tìm theo họ tên, email hoặc mã sinh viên..."
+                class="students-search-input"
+                maxlength="255" />
+
+            <button
+                type="submit"
+                class="students-search-button">
+                Tìm kiếm
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Search))
+            {
+                <a
+                    asp-controller="Admin"
+                    asp-action="Students"
+                    class="students-reset-button">
+                    Xóa lọc
+                </a>
+            }
+
+        </form>
+
+        <!-- Bảng danh sách sinh viên -->
+        <div class="students-table-wrapper">
+
+            <table class="students-table">
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ và tên</th>
+                        <th>Mã sinh viên</th>
+                        <th>Email</th>
+                        <th>Lớp</th>
+                        <th>Số phản ánh</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (Model.Students.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="students-empty">
+                                Không tìm thấy sinh viên phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var student in Model.Students)
+                        {
+                            <tr>
+
+                                <!-- ID sinh viên -->
+                                <td>
+                                    @student.Id
+                                </td>
+
+                                <!-- Họ tên -->
+                                <td>
+                                    <span class="students-name">
+                                        @student.FullName
+                                    </span>
+                                </td>
+
+                                <!-- Mã sinh viên -->
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(student.StudentCode)
+                                        ? "Chưa cập nhật"
+                                        : student.StudentCode)
+                                </td>
+
+                                <!-- Email -->
+                                <td>
+                                    @student.Email
+                                </td>
+
+                                <!-- Lớp -->
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(student.ClassName)
+                                        ? "Chưa cập nhật"
+                                        : student.ClassName)
+                                </td>
+
+                                <!-- Số lượng phản ánh -->
+                                <td>
+                                    <span class="students-count">
+                                        @student.ReflectionCount
+                                    </span>
+                                </td>
+
+                                <!-- Thao tác -->
+                                <td>
+                                    <a
+                                        asp-controller="Admin"
+                                        asp-action="StudentDetails"
+                                        asp-route-id="@student.Id"
+                                        class="student-history-link">
+                                        Xem chi tiết
+                                    </a>
+                                </td>
+
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>

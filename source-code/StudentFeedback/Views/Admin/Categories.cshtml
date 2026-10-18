@@ -1,0 +1,124 @@
+
+@model List<StudentFeedback.Models.Category>
+
+@{
+    ViewData["Title"] = "Quản lý danh mục";
+    Layout = "_AdminLayout";
+}
+
+<div class="category-page">
+
+    
+<div class="category-header">
+    <div>
+        <h1>Quản lý danh mục</h1>
+        <p>Quản lý các danh mục phản ánh của sinh viên</p>
+    </div>
+
+    <a asp-controller="Admin"
+       asp-action="CategoryCreate"
+       class="btn-save">
+        + Thêm danh mục
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] is string message)
+{
+    <div class="admin-success-message" role="status">
+        @message
+    </div>
+}
+
+
+@if (TempData["ErrorMessage"] is string errorMessage)
+{
+    <div class="admin-error-message" role="alert">
+        @errorMessage
+    </div>
+}
+
+
+
+    <div class="panel">
+
+        <form method="get"
+              asp-controller="Admin"
+              asp-action="Categories"
+              class="category-search">
+
+            <input type="text"
+                   name="search"
+                   value="@ViewBag.Search"
+                   placeholder="Tìm kiếm danh mục..." />
+
+            <button type="submit">
+                Tìm kiếm
+            </button>
+
+            <a asp-controller="Admin"
+               asp-action="Categories">
+                Xóa lọc
+            </a>
+        </form>
+
+        <div class="admin-table-wrapper">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Tên danh mục</th>
+                        <th>Mô tả</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (Model.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="4" class="empty">
+                                Không tìm thấy danh mục nào.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.Id</td>
+                                <td>
+                                    <strong>@item.Name</strong>
+                                </td>
+                                <td>
+                                    @(item.Description ?? "Chưa có mô tả")
+                                </td>
+                                <td>
+                                    <div class="category-actions">
+                                        <a asp-controller="Admin"
+                                           asp-action="CategoryEdit"
+                                           asp-route-id="@item.Id"
+                                           class="btn-edit">
+                                            Sửa
+                                        </a>
+
+                                        <a asp-controller="Admin"
+                                           asp-action="CategoryDelete"
+                                           asp-route-id="@item.Id"
+                                           class="btn-delete">
+                                            Xóa
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <p class="category-count">
+            Hiển thị @Model.Count danh mục
+        </p>
+    </div>
+</div>

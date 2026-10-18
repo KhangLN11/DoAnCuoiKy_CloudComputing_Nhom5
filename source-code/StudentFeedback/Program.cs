@@ -2,11 +2,16 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using StudentFeedback.Data;
+using StudentFeedback.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+
+// CSV Services
+builder.Services.AddScoped<StudentCsvPreviewService>();
+builder.Services.AddSingleton<StudentCsvTemporaryStorageService>();
 
 // Database
 var connectionString = builder.Configuration
@@ -14,12 +19,15 @@ var connectionString = builder.Configuration
     ?? throw new InvalidOperationException(
         "Chưa cấu hình DefaultConnection.");
 
+// MariaDB 10.4.32 (XAMPP)
+// Khai báo phiên bản cố định để tránh kết nối database
+// khi EF Core tạo migration.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         connectionString,
-        ServerVersion.AutoDetect(connectionString)));
+        new MariaDbServerVersion(new Version(10, 4, 32))));
 
-// NEW: Cookie Authentication
+// Cookie Authentication
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -36,7 +44,7 @@ builder.Services
         options.SlidingExpiration = true;
     });
 
-// NEW: Authorization
+// Authorization
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
@@ -53,7 +61,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// NEW: Authentication must run before Authorization
+// Authentication must run before Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 

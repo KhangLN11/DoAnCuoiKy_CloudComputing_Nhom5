@@ -1,0 +1,366 @@
+
+@model StudentFeedback.Models.ViewModels.AdminAccountListViewModel
+
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+    Layout = "_AdminLayout";
+
+    var inactiveStudentCount = Model.Accounts.Count(
+        a => a.Role == "Student" && !a.IsActive);
+}
+
+<div class="accounts-page">
+
+    <!-- Tiêu đề trang -->
+    <div class="accounts-page-header">
+        <div>
+            <h1>Quản lý tài khoản</h1>
+            <p>
+                Theo dõi thông tin, vai trò và trạng thái
+                kích hoạt tài khoản trong hệ thống.
+            </p>
+
+            <a asp-controller="Admin"
+               asp-action="ImportStudents"
+               class="student-import-button"
+               style="display:inline-block; text-decoration:none; margin-top:16px;">
+                Nhập danh sách sinh viên (CSV)
+            </a>
+        </div>
+    </div>
+
+    <!-- Thông báo -->
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success"
+             role="alert"
+             style="margin:16px 0; padding:12px; border-radius:8px;">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger"
+             role="alert"
+             style="margin:16px 0; padding:12px; border-radius:8px;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <!-- Thống kê tài khoản -->
+    <div class="accounts-stats">
+
+        <div class="accounts-stat-card">
+            <div class="accounts-stat-label">
+                Tổng tài khoản
+            </div>
+            <div class="accounts-stat-value">
+                @Model.TotalAccounts
+            </div>
+        </div>
+
+        <div class="accounts-stat-card">
+            <div class="accounts-stat-label">
+                Tài khoản sinh viên
+            </div>
+            <div class="accounts-stat-value">
+                @Model.TotalStudents
+            </div>
+        </div>
+
+        <div class="accounts-stat-card">
+            <div class="accounts-stat-label">
+                Tài khoản quản trị viên
+            </div>
+            <div class="accounts-stat-value">
+                @Model.TotalAdmins
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Danh sách tài khoản -->
+    <section class="accounts-panel">
+
+        <div class="accounts-panel-header">
+            <div>
+                <h2>Danh sách tài khoản</h2>
+                <p>
+                    Hiển thị @Model.Accounts.Count tài khoản
+                    theo điều kiện tìm kiếm và lọc.
+                </p>
+            </div>
+        </div>
+
+        <!-- Thông tin tài khoản sinh viên -->
+        <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            flex-wrap:wrap;
+            gap:12px;
+            padding:16px;
+            margin:16px 0;
+            border:1px solid #cbd5e1;
+            border-radius:10px;
+            background:#f8fafc;">
+
+            <div>
+                <strong style="color:#334155;">
+                    Quản lý tài khoản sinh viên
+                </strong>
+
+                <p style="margin:8px 0; color:#475569;">
+                    Tài khoản sinh viên được tạo khi
+                    quản trị viên nhập danh sách CSV.
+                    Trạng thái kích hoạt được quản lý
+                    trong hệ thống.
+                </p>
+
+                <small style="color:#64748b;">
+                    Đang hiển thị @inactiveStudentCount
+                    sinh viên chưa kích hoạt trong danh sách hiện tại.
+                </small>
+
+                <p style="margin:8px 0 0; color:#64748b; font-size:13px;">
+                    Chức năng thiết lập mật khẩu qua email
+                    đã được loại bỏ. Quy trình cấp mật khẩu
+                    ban đầu đang được cập nhật cho môi trường demo.
+                </p>
+            </div>
+
+        </div>
+
+        
+<!-- Quản lý kích hoạt tài khoản sinh viên -->
+<div style="
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:16px;
+    padding:16px;
+    margin:16px 0;
+    border:1px solid #cbd5e1;
+    border-radius:10px;
+    background:#f8fafc;">
+
+    <div style="flex:1; min-width:240px;">
+
+        <strong style="color:#334155;">
+            Quản lý kích hoạt tài khoản sinh viên
+        </strong>
+
+        <p style="margin:8px 0; color:#475569;">
+            Tài khoản sinh viên được tạo khi quản trị viên
+            nhập danh sách CSV. Quản trị viên có thể kích hoạt
+            đồng loạt các tài khoản chưa kích hoạt.
+        </p>
+
+        <small style="color:#64748b;">
+            Đang hiển thị @inactiveStudentCount sinh viên
+            chưa kích hoạt trong danh sách hiện tại.
+        </small>
+
+        <p style="
+            margin:8px 0 0;
+            color:#64748b;
+            font-size:13px;">
+            Lưu ý: Kích hoạt tài khoản không thay đổi mật khẩu.
+            Mật khẩu ban đầu cho tài khoản demo sẽ được
+            cấu hình ở giai đoạn tiếp theo.
+        </p>
+
+    </div>
+
+    <form asp-controller="Admin"
+          asp-action="ActivateAllStudents"
+          method="post"
+          onsubmit="return confirm('Bạn có chắc chắn muốn kích hoạt tất cả tài khoản sinh viên chưa kích hoạt?');">
+
+        @Html.AntiForgeryToken()
+
+        <button type="submit"
+                style="
+                    padding:11px 18px;
+                    border:0;
+                    border-radius:8px;
+                    background:#2563eb;
+                    color:white;
+                    font-weight:600;
+                    cursor:pointer;
+                    white-space:nowrap;">
+            Kích hoạt tất cả sinh viên
+        </button>
+
+    </form>
+
+</div>
+
+
+        <!-- Tìm kiếm và lọc -->
+        <form asp-controller="Admin"
+              asp-action="Accounts"
+              method="get"
+              class="accounts-filter-form">
+
+            <input type="text"
+                   name="search"
+                   value="@Model.Search"
+                   placeholder="Tìm theo họ tên, email hoặc mã sinh viên..."
+                   class="accounts-search-input"
+                   maxlength="255" />
+
+            <select name="roleFilter"
+                    class="accounts-role-select">
+
+                <option value="">
+                    Tất cả vai trò
+                </option>
+
+                <option value="Student"
+                        selected="@(Model.RoleFilter == "Student")">
+                    Sinh viên
+                </option>
+
+                <option value="Admin"
+                        selected="@(Model.RoleFilter == "Admin")">
+                    Quản trị viên
+                </option>
+
+            </select>
+
+            <button type="submit"
+                    class="accounts-search-button">
+                Tìm kiếm
+            </button>
+
+            @if (!string.IsNullOrWhiteSpace(Model.Search) ||
+                 !string.IsNullOrWhiteSpace(Model.RoleFilter))
+            {
+                <a asp-controller="Admin"
+                   asp-action="Accounts"
+                   class="accounts-reset-button">
+                    Xóa lọc
+                </a>
+            }
+
+        </form>
+
+        <!-- Bảng danh sách tài khoản -->
+        <div class="accounts-table-wrapper">
+
+            <table class="accounts-table">
+
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Họ và tên</th>
+                        <th>Email</th>
+                        <th>Vai trò</th>
+                        <th>Mã sinh viên</th>
+                        <th>Lớp</th>
+                        <th>Trạng thái</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    @if (Model.Accounts.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="accounts-empty">
+                                Không tìm thấy tài khoản phù hợp.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var account in Model.Accounts)
+                        {
+                            <tr>
+                                <td>@account.Id</td>
+
+                                <td>
+                                    <span class="accounts-name">
+                                        @account.FullName
+                                    </span>
+                                </td>
+
+                                <td>@account.Email</td>
+
+                                <td>
+                                    @if (account.Role == "Admin")
+                                    {
+                                        <span class="accounts-role admin">
+                                            Quản trị viên
+                                        </span>
+                                    }
+                                    else if (account.Role == "Student")
+                                    {
+                                        <span class="accounts-role student">
+                                            Sinh viên
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="accounts-role unknown">
+                                            @account.Role
+                                        </span>
+                                    }
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(account.StudentCode)
+                                        ? "—"
+                                        : account.StudentCode)
+                                </td>
+
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(account.ClassName)
+                                        ? "—"
+                                        : account.ClassName)
+                                </td>
+
+                                <td>
+                                    @if (account.IsActive)
+                                    {
+                                        <span style="
+                                            display:inline-block;
+                                            padding:6px 10px;
+                                            border-radius:20px;
+                                            background:#dcfce7;
+                                            color:#166534;
+                                            font-weight:600;
+                                            white-space:nowrap;">
+                                            Đã kích hoạt
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="
+                                            display:inline-block;
+                                            padding:6px 10px;
+                                            border-radius:20px;
+                                            background:#fef3c7;
+                                            color:#92400e;
+                                            font-weight:600;
+                                            white-space:nowrap;">
+                                            Chưa kích hoạt
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>

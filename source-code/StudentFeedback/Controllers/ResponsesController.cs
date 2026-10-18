@@ -1,3 +1,6 @@
+
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using StudentFeedback.Contracts;
@@ -7,78 +10,206 @@ using StudentFeedback.Models;
 namespace StudentFeedback.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/responses")]
 public sealed class ResponsesController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
 
-    public ResponsesController(ApplicationDbContext db) => _db = db;
-
-    [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int? reflectionId)
+    public ResponsesController(ApplicationDbContext db)
     {
-        var query = _db.Responses.AsNoTracking().AsQueryable();
+        _db = db;
+    }
+
+    private int? GetCurrentUserId()
+    {
+        string? claim = User.FindFirstValue(
+            ClaimTypes.NameIdentifier);
+
+        return int.TryParse(claim, out int id) && id > 0
+            ? id
+            : null;
+    }
+
+    // GET: /api/responses
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] int? reflectionId)
+    {
+        int? currentUserId = GetCurrentUserId();
+
+        if (!currentUserId.HasValue)
+            return Unauthorized();
+
+        if (reflectionId.HasValue && reflectionId.Value <= 0)
+        {
+            return BadRequest(new
+            {
+                message = "ReflectionId phải lớn hơn 0."
+            });
+        }
+
+        var query = _db.Responses
+            .AsNoTracking()
+            .AsQueryable();
+
+        // Student chỉ được xem phản hồi thuộc phản ánh của mình.
+        if (!User.IsInRole("Admin"))
+        {
+            query = query.Where(r =>
+                _db.Reflections.Any(f =>
+                    f.Id == r.ReflectionId &&
+                    f.UserId == currentUserId.Value));
+        }
+
         if (reflectionId.HasValue)
         {
-            if (reflectionId.Value <= 0) return BadRequest(new { message = "ReflectionId phải lớn hơn 0." });
-            query = query.Where(x => x.ReflectionId == reflectionId.Value);
+            query = query.Where(r =>
+                r.ReflectionId == reflectionId.Value);
         }
-        var items = await query.OrderByDescending(x => x.CreatedAt)
-            .Select(x => new { x.Id, x.Content, x.ReflectionId, x.UserId, x.CreatedAt })
+
+        var items = await query
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new
+            {
+                r.Id,
+                r.Content,
+                r.ReflectionId,
+                r.UserId,
+                r.CreatedAt
+            })
             .ToListAsync();
+
         return Ok(items);
     }
 
+    // GET: /api/responses/5
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var item = await _db.Responses.AsNoTracking()
-            .Where(x => x.Id == id)
-            .Select(x => new { x.Id, x.Content, x.ReflectionId, x.UserId, x.CreatedAt })
+        int? currentUserId = GetCurrentUserId();
+
+        if (!currentUserId.HasValue)
+            return Unauthorized();
+
+        var query = _db.Responses
+            .AsNoTracking()
+            .Where(r => r.Id == id);
+
+        if (!User.IsInRole("Admin"))
+        {
+            query = query.Where(r =>
+                _db.Reflections.Any(f =>
+                    f.Id == r.ReflectionId &&
+                    f.UserId == currentUserId.Value));
+        }
+
+        var item = await query
+            .Select(r => new
+            {
+                r.Id,
+                r.Content,
+                r.ReflectionId,
+                r.UserId,
+                r.CreatedAt
+            })
             .FirstOrDefaultAsync();
+
         return item is null ? NotFound() : Ok(item);
     }
 
+    // POST: /api/responses
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] ResponseCreateRequest request)
+    [Authorize(Roles = "Admin")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(
+        [FromBody] ResponseCreateRequest request)
     {
-        if (!await _db.Reflections.AnyAsync(x => x.Id == request.ReflectionId))
-            return BadRequest(new { message = "ReflectionId không tồn tại." });
-        if (!await _db.Users.AnyAsync(x => x.Id == request.UserId))
-            return BadRequest(new { message = "UserId không tồn tại." });
+        int? currentUserId = GetCurrentUserId();
+
+        if (!currentUserId.HasValue)
+            return Unauthorized();
+
+        bool isAdmin = await _db.Users.AnyAsync(u =>
+            u.Id == currentUserId.Value &&
+            u.Role == "Admin");
+
+        if (!isAdmin)
+            return Forbid();
+
+        bool reflectionExists = await _db.Reflections
+            .AnyAsync(r => r.Id == request.ReflectionId);
+
+        if (!reflectionExists)
+        {
+            return BadRequest(new
+            {
+                message = "ReflectionId không tồn tại."
+            });
+        }
+
+        string content = request.Content?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            return BadRequest(new
+            {
+                message = "Nội dung phản hồi không được để trống."
+            });
+        }
 
         var item = new Response
         {
-            Content = request.Content.Trim(),
+            Content = content,
             ReflectionId = request.ReflectionId,
-            UserId = request.UserId,
+
+            // Không dùng request.UserId.
+            UserId = currentUserId.Value,
+
             CreatedAt = DateTime.UtcNow
         };
+
         _db.Responses.Add(item);
         await _db.SaveChangesAsync();
-        return CreatedAtAction(nameof(GetById), new { id = item.Id },
-            new { item.Id, item.Content, item.ReflectionId, item.UserId, item.CreatedAt });
+
+        return CreatedAtAction(
+            nameof(GetById),
+            new { id = item.Id },
+            new
+            {
+                item.Id,
+                item.Content,
+                item.ReflectionId,
+                item.UserId,
+                item.CreatedAt
+            });
     }
 
+    // PUT: /api/responses/5
     [HttpPut("{id:int}")]
-    public async Task<IActionResult> Update(int id, [FromBody] ResponseUpdateRequest request)
+    [ValidateAntiForgeryToken]
+    public IActionResult Update(int id)
     {
-        var item = await _db.Responses.FindAsync(id);
-        if (item is null) return NotFound();
-
-        item.Content = request.Content.Trim();
-        await _db.SaveChangesAsync();
-        return NoContent();
+        return StatusCode(
+            StatusCodes.Status405MethodNotAllowed,
+            new
+            {
+                message =
+                    "Chức năng sửa phản hồi hiện chưa được hỗ trợ."
+            });
     }
 
+    // DELETE: /api/responses/5
     [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
+    [ValidateAntiForgeryToken]
+    public IActionResult Delete(int id)
     {
-        var item = await _db.Responses.FindAsync(id);
-        if (item is null) return NotFound();
-
-        _db.Responses.Remove(item);
-        await _db.SaveChangesAsync();
-        return NoContent();
+        return StatusCode(
+            StatusCodes.Status405MethodNotAllowed,
+            new
+            {
+                message =
+                    "Chức năng xóa phản hồi hiện chưa được hỗ trợ."
+            });
     }
 }
