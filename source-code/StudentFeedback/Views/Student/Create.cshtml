@@ -1,72 +1,74 @@
+@model StudentFeedback.Models.ViewModels.StudentCreateReflectionViewModel
 @{
     ViewData["Title"] = "Tạo phản ánh";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
 }
-<h1 style="color:red">KIỂM TRA TRANG CREATE</h1>
 <style>
-    .sf-page { max-width: 1120px; margin: 12px auto 50px; }
-    .sf-page h1 { font-size: 25px; font-weight: 800; color: #2d3748; }
-    .sf-page .sf-subtitle { color: #788596; font-size: 13px; }
-    .sf-box { background: #fff; border: 1px solid #edf0f4; border-radius: 14px; box-shadow: 0 4px 18px #2434480a; }
-    .sf-label { display: block; font-size: 13px; font-weight: 700; margin-bottom: 9px; }
-    .sf-input { border-radius: 8px; border: 1px solid #e2e7ee; padding: 12px 14px; font-size: 13px; }
-    .sf-input:focus { border-color: #ffa726; box-shadow: 0 0 0 3px #ffa72624; }
-    .sf-btn { background: #ffa726; color: #fff; border: 0; border-radius: 7px; padding: 11px 20px; font-weight: 700; text-decoration: none; }
-    .sf-btn:hover { background: #f28c19; color: #fff; }
-    .sf-upload { border: 2px dashed #e0e5eb; background: #fcfdff; border-radius: 10px; padding: 24px; text-align: center; }
-    .sf-upload.dragging { background: #fff7ed; border-color: #ffa726; }
-    .sf-note { background: #fff8ef; border-color: #ffe9cc; }
-    .sf-note li { margin-bottom: 14px; color: #687586; font-size: 13px; line-height: 1.7; }
+    .sf-page { max-width:1120px; margin:12px auto 50px; }
+    .sf-page h1 { font-size:25px; font-weight:800; color:#2d3748; }
+    .sf-page .sf-subtitle { color:#788596; font-size:13px; }
+    .sf-box { background:#fff; border:1px solid #edf0f4; border-radius:14px; box-shadow:0 4px 18px #2434480a; }
+    .sf-label { display:block; font-size:13px; font-weight:700; margin-bottom:9px; }
+    .sf-input { border-radius:8px; border:1px solid #e2e7ee; padding:12px 14px; font-size:13px; }
+    .sf-input:focus { border-color:#ffa726; box-shadow:0 0 0 3px #ffa72624; }
+    .sf-btn { background:#ffa726; color:#fff; border:0; border-radius:7px; padding:11px 20px; font-weight:700; text-decoration:none; }
+    .sf-btn:hover { background:#f28c19; color:#fff; }
+    .sf-btn:disabled { opacity:.65; cursor:not-allowed; }
+    .sf-note { background:#fff8ef; border-color:#ffe9cc; }
+    .sf-note li { margin-bottom:14px; color:#687586; font-size:13px; line-height:1.7; }
+    .sf-validation { display:block; margin-top:6px; font-size:12px; }
 </style>
-
 <div class="sf-page container">
     <div class="mb-4">
         <h1>Tạo phản ánh mới</h1>
-        <p class="sf-subtitle mb-0">Hãy mô tả chi tiết vấn đề và đính kèm minh chứng nếu có.</p>
+        <p class="sf-subtitle mb-0">Hãy mô tả chi tiết vấn đề để nhà trường có thể tiếp nhận và xử lý.</p>
     </div>
-
     <div class="row g-4 align-items-start">
         <div class="col-lg-8">
             <div class="sf-box p-4">
-                <form id="createReflectionForm" enctype="multipart/form-data">
+                <form id="createReflectionForm" asp-controller="Student" asp-action="Create" method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3" role="alert"></div>
                     <div class="mb-4">
-                        <label for="reflectionTitle" class="sf-label">Tiêu đề phản ánh <span class="text-danger">*</span></label>
-                        <input id="reflectionTitle" name="Title" class="form-control sf-input" maxlength="200"
-                               placeholder="Nhập tiêu đề phản ánh..." required />
+                        <label asp-for="Title" class="sf-label">Tiêu đề phản ánh <span class="text-danger">*</span></label>
+                        <input asp-for="Title" id="reflectionTitle" class="form-control sf-input" maxlength="200" placeholder="Nhập tiêu đề phản ánh..." required />
+                        <span asp-validation-for="Title" class="text-danger sf-validation"></span>
                     </div>
                     <div class="mb-4">
-                        <label for="reflectionCategory" class="sf-label">Danh mục <span class="text-danger">*</span></label>
-                        <select id="reflectionCategory" name="CategoryId" class="form-select sf-input" required>
-                            <option value="">Chọn danh mục</option>
-                            <option value="1">Cơ sở vật chất</option>
-                            <option value="2">Dịch vụ sinh viên</option>
-                            <option value="3">Phòng học</option>
-                            <option value="4">Học vụ</option>
-                            <option value="5">Khác</option>
+                        <label asp-for="CategoryId" class="sf-label">Danh mục <span class="text-danger">*</span></label>
+                        <select asp-for="CategoryId" id="reflectionCategory" class="form-select sf-input" required>
+                            <option value="0">Chọn danh mục</option>
+                            @foreach (var category in Model.Categories)
+                            {
+                                <option value="@category.Id">@category.Name</option>
+                            }
                         </select>
+                        <span asp-validation-for="CategoryId" class="text-danger sf-validation"></span>
                     </div>
                     <div class="mb-4">
-                        <label for="reflectionContent" class="sf-label">Nội dung phản ánh <span class="text-danger">*</span></label>
-                        <textarea id="reflectionContent" name="Content" rows="7" maxlength="4000"
-                                  class="form-control sf-input" placeholder="Nhập nội dung phản ánh..." required></textarea>
+                        <label asp-for="Content" class="sf-label">Nội dung phản ánh <span class="text-danger">*</span></label>
+                        <textarea asp-for="Content" id="reflectionContent" rows="7" maxlength="4000" class="form-control sf-input" placeholder="Nhập nội dung phản ánh..." required></textarea>
                         <div class="text-end text-secondary small mt-1"><span id="contentCount">0</span>/4000</div>
+                        <span asp-validation-for="Content" class="text-danger sf-validation"></span>
                     </div>
                     <div class="mb-4">
-                        <label for="reflectionFiles" class="sf-label">Đính kèm minh chứng (không bắt buộc)</label>
-                        <div id="uploadZone" class="sf-upload">
-                            <div style="font-size:34px;color:#ffa726">⇧</div>
-                            <div class="mb-2">Kéo thả tệp vào đây hoặc</div>
-                            <label for="reflectionFiles" class="btn sf-btn">Chọn tệp</label>
-                            <input id="reflectionFiles" name="EvidenceFiles" type="file" class="visually-hidden"
-                                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.zip" multiple />
-                            <div class="small text-secondary mt-3">JPG, PNG, PDF, DOC, DOCX, ZIP · Tối đa 10 MB mỗi tệp</div>
+                        <label for="reflectionAttachments" class="sf-label">Đính kèm minh chứng (không bắt buộc)</label>
+                        <div class="rounded-3 p-3" style="background:#f8fafc;border:1px dashed #dce3eb;">
+                            <div class="d-flex align-items-start gap-3">
+                                <span style="font-size:28px;" aria-hidden="true">📎</span>
+                                <div class="flex-grow-1">
+                                    <strong class="small">Chọn tệp minh chứng</strong>
+                                    <p class="small text-secondary mt-1 mb-2">PDF, JPG, JPEG hoặc PNG; tối đa 5 tệp, mỗi tệp 10 MB.</p>
+                                    <input type="file" id="reflectionAttachments" name="attachments" multiple accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" class="form-control sf-input" />
+                                    <div id="fileSummary" class="small text-secondary mt-2" aria-live="polite">Chưa chọn tệp nào.</div>
+                                    <div id="fileError" class="text-danger small mt-1" role="alert"></div>
+                                </div>
+                            </div>
                         </div>
-                        <ul id="selectedFiles" class="small mt-2 mb-0"></ul>
                     </div>
-                    <div id="createNotice" class="alert alert-info small" role="status" hidden></div>
                     <div class="d-flex gap-3 justify-content-end flex-wrap">
-                        <a href="/Student/Index" class="btn btn-light px-4 py-2">Hủy</a>
-                        <button type="submit" class="btn sf-btn">Gửi phản ánh →</button>
+                        <a asp-controller="Student" asp-action="Index" class="btn btn-light px-4 py-2">Hủy</a>
+                        <button id="submitReflectionButton" type="submit" class="btn sf-btn">Gửi phản ánh →</button>
                     </div>
                 </form>
             </div>
@@ -76,8 +78,9 @@
                 <h2 style="font-size:19px;color:#f28c19;font-weight:800">✦ Lưu ý</h2>
                 <ul class="ps-3 mt-3">
                     <li>Vui lòng cung cấp thông tin chính xác và đầy đủ.</li>
-                    <li>Đính kèm minh chứng giúp việc xử lý nhanh hơn.</li>
+                    <li>Mô tả rõ vấn đề, địa điểm và thời gian nếu có.</li>
                     <li>Bạn có thể theo dõi trạng thái phản ánh trong danh sách.</li>
+                    <li>Chỉ tải lên minh chứng phù hợp, không chứa thông tin nhạy cảm không cần thiết.</li>
                 </ul>
                 <div class="text-center" style="font-size:68px;color:#ffa726" aria-hidden="true">✉</div>
                 <p class="text-center small mb-0" style="color:#b58b58">Mỗi phản ánh góp phần xây dựng môi trường học tập tốt hơn.</p>
@@ -85,45 +88,34 @@
         </div>
     </div>
 </div>
-
+@section Scripts {
 <script>
 (() => {
     const form = document.getElementById('createReflectionForm');
     const content = document.getElementById('reflectionContent');
-    const files = document.getElementById('reflectionFiles');
-    const zone = document.getElementById('uploadZone');
-    const list = document.getElementById('selectedFiles');
-    const notice = document.getElementById('createNotice');
-    content.addEventListener('input', () => document.getElementById('contentCount').textContent = content.value.length);
-    function showFiles() {
-        list.replaceChildren();
-        for (const file of files.files) {
-            const li = document.createElement('li');
-            li.textContent = file.name + ' (' + (file.size / 1048576).toFixed(2) + ' MB)';
-            list.appendChild(li);
-        }
+    const count = document.getElementById('contentCount');
+    const button = document.getElementById('submitReflectionButton');
+    const input = document.getElementById('reflectionAttachments');
+    const summary = document.getElementById('fileSummary');
+    const error = document.getElementById('fileError');
+    const allowed = new Set(['pdf', 'jpg', 'jpeg', 'png']);
+    const maxSize = 10 * 1024 * 1024;
+    let validFiles = true;
+    function validateFiles() {
+        const files = Array.from(input.files || []);
+        validFiles = files.length <= 5 && files.every(f => f.size > 0 && f.size <= maxSize && allowed.has((f.name.split('.').pop() || '').toLowerCase()));
+        error.textContent = validFiles ? '' : 'Chỉ chọn tối đa 5 tệp PDF/JPG/JPEG/PNG, mỗi tệp từ 1 byte đến 10 MB.';
+        summary.textContent = files.length ? files.map(f => `${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)`).join(' · ') : 'Chưa chọn tệp nào.';
+        return validFiles;
     }
-    files.addEventListener('change', showFiles);
-    ['dragover', 'dragenter'].forEach(type => zone.addEventListener(type, e => {
-        e.preventDefault(); zone.classList.add('dragging');
-    }));
-    ['dragleave', 'drop'].forEach(type => zone.addEventListener(type, e => {
-        e.preventDefault(); zone.classList.remove('dragging');
-    }));
-    zone.addEventListener('drop', e => {
-        if (e.dataTransfer && e.dataTransfer.files.length) {
-            files.files = e.dataTransfer.files; showFiles();
-        }
-    });
+    content.addEventListener('input', () => count.textContent = content.value.length);
+    count.textContent = content.value.length;
+    input.addEventListener('change', validateFiles);
     form.addEventListener('submit', e => {
-        e.preventDefault();
-        if (!form.reportValidity()) return;
-        const invalid = [...files.files].some(f => f.size > 10485760 || !/\.(jpg|jpeg|png|pdf|doc|docx|zip)$/i.test(f.name));
-        notice.hidden = false;
-        notice.className = invalid ? 'alert alert-danger small' : 'alert alert-info small';
-        notice.textContent = invalid
-            ? 'Tệp không hợp lệ hoặc vượt quá 10 MB. Vui lòng chọn lại.'
-            : 'Đã kiểm tra biểu mẫu. Đây là giao diện minh họa; dữ liệu chưa được gửi và lưu vào MySQL.';
+        if (!form.checkValidity() || !validateFiles()) { e.preventDefault(); return; }
+        button.disabled = true;
+        button.textContent = 'Đang gửi...';
     });
 })();
 </script>
+}

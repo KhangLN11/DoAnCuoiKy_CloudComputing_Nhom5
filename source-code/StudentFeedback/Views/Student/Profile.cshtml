@@ -1,0 +1,387 @@
+
+@model StudentFeedback.Models.ViewModels.StudentProfileViewModel
+
+@{
+    ViewData["Title"] = "Thông tin cá nhân";
+    Layout = "~/Views/Shared/_StudentLayout.cshtml";
+}
+
+<style>
+    .sf-profile {
+        max-width: 1120px;
+        margin: 12px auto 50px;
+    }
+
+    .sf-profile h1 {
+        font-size: 25px;
+        font-weight: 800;
+        color: #2d3748;
+    }
+
+    .sf-profile h2 {
+        font-size: 18px;
+        font-weight: 800;
+        color: #2d3748;
+    }
+
+    .sf-profile-card {
+        background: #fff;
+        border: 1px solid #edf0f4;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px #2434480a;
+        padding: 25px;
+    }
+
+    .sf-profile-avatar {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        background: #fff0df;
+        color: #f28c19;
+        display: grid;
+        place-items: center;
+        font-size: 27px;
+        font-weight: 800;
+        flex-shrink: 0;
+    }
+
+    .sf-profile-label {
+        font-size: 12px;
+        color: #8793a2;
+        margin-bottom: 7px;
+    }
+
+    .sf-profile-value {
+        font-size: 14px;
+        font-weight: 700;
+        color: #2d3748;
+        overflow-wrap: anywhere;
+    }
+
+    .sf-profile-field {
+        padding: 15px;
+        border: 1px solid #edf0f4;
+        border-radius: 9px;
+        height: 100%;
+    }
+
+    .sf-profile-input {
+        border-radius: 8px;
+        border: 1px solid #e2e7ee;
+        padding: 11px 13px;
+        font-size: 13px;
+    }
+
+    .sf-profile-btn {
+        background: #ffa726;
+        color: #fff;
+        border: 0;
+        border-radius: 8px;
+        padding: 11px 20px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .sf-profile-btn:hover {
+        background: #f28c19;
+        color: #fff;
+    }
+
+    .sf-profile-btn:disabled {
+        opacity: .65;
+        cursor: not-allowed;
+    }
+
+    .sf-profile-note {
+        font-size: 12px;
+        color: #7b8794;
+        line-height: 1.7;
+    }
+
+    @@media (max-width: 576px) {
+        .sf-profile-card {
+            padding: 18px;
+        }
+
+        .sf-profile h1 {
+            font-size: 21px;
+        }
+    }
+</style>
+
+<div class="sf-profile container">
+
+    <a asp-controller="Student"
+       asp-action="Index"
+       class="text-decoration-none d-inline-block mb-4"
+       style="color:#64748b">
+        ← Quay lại trang chủ
+    </a>
+
+    <div class="mb-4">
+        <h1>Thông tin cá nhân</h1>
+        <p class="small text-secondary mb-0">
+            Xem thông tin tài khoản và quản lý mật khẩu.
+        </p>
+    </div>
+
+    @if (TempData["ProfileSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show"
+             role="alert">
+            @successMessage
+
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Đóng"></button>
+        </div>
+    }
+
+    <div class="sf-profile-card mb-4">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="sf-profile-avatar" aria-hidden="true">
+                SV
+            </div>
+
+            <div>
+                <h2 class="mb-2">@Model.FullName</h2>
+
+                <div class="text-secondary small">
+                    @(string.IsNullOrWhiteSpace(Model.StudentCode)
+                        ? "Chưa có mã sinh viên"
+                        : Model.StudentCode)
+                </div>
+
+                <span class="badge bg-success mt-2">
+                    @(Model.IsActive
+                        ? "Đang hoạt động"
+                        : "Ngừng hoạt động")
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="sf-profile-card mb-4">
+        <h2 class="mb-3">Thông tin sinh viên</h2>
+
+        <div class="row g-3">
+
+            <div class="col-md-6">
+                <div class="sf-profile-field">
+                    <div class="sf-profile-label">Họ và tên</div>
+                    <div class="sf-profile-value">
+                        @Model.FullName
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="sf-profile-field">
+                    <div class="sf-profile-label">Mã sinh viên</div>
+                    <div class="sf-profile-value">
+                        @(string.IsNullOrWhiteSpace(Model.StudentCode)
+                            ? "Chưa cập nhật"
+                            : Model.StudentCode)
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="sf-profile-field">
+                    <div class="sf-profile-label">Lớp</div>
+                    <div class="sf-profile-value">
+                        @(string.IsNullOrWhiteSpace(Model.ClassName)
+                            ? "Chưa cập nhật"
+                            : Model.ClassName)
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="sf-profile-field">
+                    <div class="sf-profile-label">Email</div>
+                    <div class="sf-profile-value">
+                        @Model.Email
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <p class="sf-profile-note mt-3 mb-0">
+            Mã sinh viên, lớp và email do nhà trường quản lý.
+            Nếu thông tin chưa chính xác, vui lòng liên hệ quản trị viên.
+        </p>
+    </div>
+
+    <div class="row g-4 align-items-start">
+
+        <!-- CẬP NHẬT HỌ TÊN -->
+        <div class="col-lg-6">
+            <div class="sf-profile-card">
+
+                <h2 class="mb-2">Cập nhật họ tên</h2>
+
+                <p class="sf-profile-note mb-4">
+                    Họ tên sau khi cập nhật sẽ được hiển thị
+                    trên tài khoản Student.
+                </p>
+
+                <form asp-controller="StudentProfile"
+                      asp-action="Update"
+                      method="post"
+                      id="updateProfileForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-4">
+                        <label for="EditFullName"
+                               class="form-label fw-semibold small">
+                            Họ và tên
+                            <span class="text-danger">*</span>
+                        </label>
+
+                        <input id="EditFullName"
+                               name="editFullName"
+                               value="@Model.EditFullName"
+                               class="form-control sf-profile-input"
+                               maxlength="100"
+                               autocomplete="name"
+                               required />
+
+                        @if (ViewData.ModelState.TryGetValue(
+                            "EditFullName",
+                            out var nameState))
+                        {
+                            @foreach (var error in nameState.Errors)
+                            {
+                                <div class="text-danger small mt-2">
+                                    @error.ErrorMessage
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <button type="submit"
+                            class="btn sf-profile-btn">
+                        Lưu thay đổi
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- ĐỔI MẬT KHẨU -->
+        <div class="col-lg-6">
+            <div class="sf-profile-card">
+
+                <h2 class="mb-2">Đổi mật khẩu</h2>
+
+                <p class="sf-profile-note mb-4">
+                    Sau khi đổi mật khẩu thành công,
+                    bạn cần đăng nhập lại.
+                </p>
+
+                <form asp-controller="StudentProfile"
+                      asp-action="ChangePassword"
+                      method="post"
+                      id="changePasswordForm">
+
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label for="CurrentPassword"
+                               class="form-label fw-semibold small">
+                            Mật khẩu hiện tại
+                        </label>
+
+                        <input id="CurrentPassword"
+                               name="currentPassword"
+                               type="password"
+                               class="form-control sf-profile-input"
+                               autocomplete="current-password"
+                               required />
+
+                        @if (ViewData.ModelState.TryGetValue(
+                            "CurrentPassword",
+                            out var currentState))
+                        {
+                            @foreach (var error in currentState.Errors)
+                            {
+                                <div class="text-danger small mt-2">
+                                    @error.ErrorMessage
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="NewPassword"
+                               class="form-label fw-semibold small">
+                            Mật khẩu mới
+                        </label>
+
+                        <input id="NewPassword"
+                               name="newPassword"
+                               type="password"
+                               class="form-control sf-profile-input"
+                               minlength="8"
+                               maxlength="128"
+                               autocomplete="new-password"
+                               required />
+
+                        <div class="sf-profile-note mt-1">
+                            Từ 8 đến 128 ký tự.
+                        </div>
+
+                        @if (ViewData.ModelState.TryGetValue(
+                            "NewPassword",
+                            out var newState))
+                        {
+                            @foreach (var error in newState.Errors)
+                            {
+                                <div class="text-danger small mt-2">
+                                    @error.ErrorMessage
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="ConfirmPassword"
+                               class="form-label fw-semibold small">
+                            Xác nhận mật khẩu mới
+                        </label>
+
+                        <input id="ConfirmPassword"
+                               name="confirmPassword"
+                               type="password"
+                               class="form-control sf-profile-input"
+                               minlength="8"
+                               maxlength="128"
+                               autocomplete="new-password"
+                               required />
+
+                        @if (ViewData.ModelState.TryGetValue(
+                            "ConfirmPassword",
+                            out var confirmState))
+                        {
+                            @foreach (var error in confirmState.Errors)
+                            {
+                                <div class="text-danger small mt-2">
+                                    @error.ErrorMessage
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <button type="submit"
+                            class="btn sf-profile-btn">
+                        Đổi mật khẩu
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>

@@ -1,6 +1,6 @@
-
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
+using Minio;
 using StudentFeedback.Data;
 using StudentFeedback.Services;
 
@@ -20,12 +20,35 @@ var connectionString = builder.Configuration
         "Chưa cấu hình DefaultConnection.");
 
 // MariaDB 10.4.32 (XAMPP)
-// Khai báo phiên bản cố định để tránh kết nối database
-// khi EF Core tạo migration.
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         connectionString,
         new MariaDbServerVersion(new Version(10, 4, 32))));
+
+// MinIO
+var minioEndpoint = builder.Configuration["Minio:Endpoint"]
+    ?? throw new InvalidOperationException(
+        "Thiếu cấu hình Minio:Endpoint.");
+
+var minioAccessKey = builder.Configuration["Minio:AccessKey"]
+    ?? throw new InvalidOperationException(
+        "Thiếu cấu hình Minio:AccessKey.");
+
+var minioSecretKey = builder.Configuration["Minio:SecretKey"]
+    ?? throw new InvalidOperationException(
+        "Thiếu cấu hình Minio:SecretKey.");
+
+var minioUseSSL = builder.Configuration.GetValue<bool>(
+    "Minio:UseSSL");
+
+builder.Services.AddSingleton<IMinioClient>(_ =>
+    new MinioClient()
+        .WithEndpoint(minioEndpoint)
+        .WithCredentials(minioAccessKey, minioSecretKey)
+        .WithSSL(minioUseSSL)
+        .Build());
+
+builder.Services.AddScoped<MinioStorageService>();
 
 // Cookie Authentication
 builder.Services
@@ -38,7 +61,8 @@ builder.Services
         options.Cookie.Name = "StudentFeedback.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.SecurePolicy =
+            CookieSecurePolicy.SameAsRequest;
 
         options.ExpireTimeSpan = TimeSpan.FromHours(2);
         options.SlidingExpiration = true;
@@ -61,7 +85,6 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Authentication must run before Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 

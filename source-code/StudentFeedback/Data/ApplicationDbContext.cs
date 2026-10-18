@@ -22,6 +22,9 @@ public class ApplicationDbContext : DbContext
 
     public DbSet<Attachment> Attachments => Set<Attachment>();
 
+    // N1.1: Thông báo dành cho sinh viên.
+    public DbSet<Notification> Notifications => Set<Notification>();
+
     protected override void OnModelCreating(
         ModelBuilder modelBuilder)
     {
@@ -71,5 +74,39 @@ public class ApplicationDbContext : DbContext
             .WithMany()
             .HasForeignKey(a => a.ReflectionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // ========================================
+        // N1.1 - CẤU HÌNH BẢNG NOTIFICATIONS
+        // ========================================
+
+        // Mỗi thông báo thuộc một tài khoản.
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Mỗi thông báo liên quan đến một phản ánh.
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Reflection)
+            .WithMany()
+            .HasForeignKey(n => n.ReflectionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Tối ưu danh sách thông báo của từng sinh viên.
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new
+            {
+                n.UserId,
+                n.CreatedAt
+            });
+
+        // Tối ưu việc đếm thông báo chưa đọc.
+        modelBuilder.Entity<Notification>()
+            .HasIndex(n => new
+            {
+                n.UserId,
+                n.IsRead
+            });
     }
 }

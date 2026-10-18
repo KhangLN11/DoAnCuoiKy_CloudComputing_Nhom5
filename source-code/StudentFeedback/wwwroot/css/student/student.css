@@ -8,10 +8,12 @@
     --student-white: #FFFFFF;
     --student-border: #E9EDF2;
     --student-muted: #7B8794;
-    --student-shadow: 0 3px 18px rgba(45,55,72,.055);
+    --student-shadow: 0 3px 18px rgba(45, 55, 72, .055);
 }
 
-* {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
 }
 
@@ -30,10 +32,12 @@ body.student-body {
     flex-direction: column;
 }
 
+/* HEADER */
+
 .student-header {
     background: var(--student-white);
     border-bottom: 1px solid var(--student-border);
-    box-shadow: 0 2px 12px rgba(0,0,0,.025);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, .025);
     position: relative;
     z-index: 10;
 }
@@ -80,6 +84,8 @@ body.student-body {
     color: var(--student-orange-dark);
 }
 
+/* NAVIGATION */
+
 .student-navigation {
     display: flex;
     align-items: center;
@@ -91,6 +97,15 @@ body.student-body {
     color: var(--student-navy);
     font-size: 13px;
     font-weight: 600;
+    transition: color .2s ease;
+}
+
+.student-nav-home:hover {
+    color: var(--student-orange-dark);
+}
+
+.student-nav-home.active {
+    color: var(--student-orange-dark);
 }
 
 .student-nav-primary {
@@ -101,15 +116,25 @@ body.student-body {
     padding: 11px 18px;
     font-size: 12px;
     font-weight: 600;
-    box-shadow: 0 3px 8px rgba(242,140,25,.16);
-    transition: background .2s, transform .2s;
+    box-shadow: 0 3px 8px rgba(242, 140, 25, .16);
+    transition: background .2s ease,
+                transform .2s ease,
+                box-shadow .2s ease;
 }
 
 .student-nav-primary:hover {
     background: #E98410;
     color: white;
     transform: translateY(-1px);
+    box-shadow: 0 5px 12px rgba(242, 140, 25, .22);
 }
+
+.student-nav-primary.active {
+    background: #E98410;
+    color: white;
+}
+
+/* NOTIFICATION */
 
 .student-notification {
     width: 34px;
@@ -118,6 +143,7 @@ body.student-body {
     place-items: center;
     color: var(--student-navy);
     border-radius: 50%;
+    transition: background .2s ease;
 }
 
 .student-notification:hover {
@@ -133,6 +159,8 @@ body.student-body {
     stroke-linecap: round;
     stroke-linejoin: round;
 }
+
+/* ACCOUNT */
 
 .student-account {
     display: flex;
@@ -152,17 +180,20 @@ body.student-body {
     place-items: center;
     font-weight: 800;
     font-size: 12px;
+    flex-shrink: 0;
 }
 
 .student-account-info {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    min-width: 0;
 }
 
 .student-account-info strong {
     font-size: 12px;
     font-weight: 700;
+    overflow-wrap: anywhere;
 }
 
 .student-account-info small {
@@ -175,13 +206,18 @@ body.student-body {
     margin-left: 4px;
 }
 
+/* MAIN */
+
 .student-main {
     width: 100%;
     max-width: 1320px;
     padding: 28px;
     margin: 0 auto;
     flex: 1;
+    min-width: 0;
 }
+
+/* FOOTER */
 
 .student-footer {
     text-align: center;
@@ -192,6 +228,8 @@ body.student-body {
     font-style: italic;
     border-top: 1px solid #F8EBDD;
 }
+
+/* SHARED COMPONENTS */
 
 .student-card {
     background: white;
@@ -212,6 +250,8 @@ body.student-body {
     text-decoration: none;
     border: 0;
     cursor: pointer;
+    transition: background .2s ease,
+                transform .2s ease;
 }
 
 .student-btn-primary {
@@ -224,16 +264,76 @@ body.student-body {
     color: white;
 }
 
+.student-btn-primary:disabled,
+.student-btn:disabled {
+    opacity: .65;
+    cursor: not-allowed;
+    transform: none;
+}
+
 .student-page-title {
     font-size: 22px;
     font-weight: 700;
     margin-bottom: 20px;
 }
 
+/* FORM AND INTERACTION */
+
+.student-body a,
+.student-body button,
+.student-body input,
+.student-body select,
+.student-body textarea {
+    -webkit-tap-highlight-color: transparent;
+}
+
+.student-body a:focus-visible,
+.student-body button:focus-visible,
+.student-body input:focus-visible,
+.student-body select:focus-visible,
+.student-body textarea:focus-visible {
+    outline: 3px solid rgba(255, 167, 38, .45);
+    outline-offset: 3px;
+}
+
+.student-body .form-control:focus,
+.student-body .form-select:focus {
+    border-color: var(--student-orange);
+    box-shadow: 0 0 0 .2rem rgba(255, 167, 38, .15);
+}
+
+.student-body .table-responsive {
+    max-width: 100%;
+}
+
+.student-body .alert {
+    border-radius: 10px;
+}
+
+/* TABLET */
+
+@media (max-width: 992px) {
+    .student-header-inner {
+        gap: 16px;
+        padding: 12px 20px;
+    }
+
+    .student-navigation {
+        gap: 14px;
+    }
+
+    .student-main {
+        padding: 22px 18px;
+    }
+}
+
+/* MOBILE */
+
 @media (max-width: 768px) {
     .student-header-inner {
         padding: 12px 16px;
         flex-wrap: wrap;
+        gap: 14px;
     }
 
     .student-brand-name {
@@ -257,7 +357,89 @@ body.student-body {
         display: none;
     }
 
+    .student-account {
+        padding-left: 10px;
+    }
+
     .student-main {
         padding: 18px 14px;
+    }
+
+    .student-card {
+        padding: 18px;
+    }
+
+    .student-page-title {
+        font-size: 20px;
+    }
+
+    .student-body .sf-list h1,
+    .student-body .sf-page h1,
+    .student-body .sf-detail h1 {
+        font-size: 21px;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .student-body .sf-card,
+    .student-body .sf-box {
+        max-width: 100%;
+    }
+}
+
+/* SMALL MOBILE */
+
+@media (max-width: 480px) {
+    .student-header-inner {
+        gap: 12px;
+    }
+
+    .student-brand-mark {
+        width: 37px;
+        height: 37px;
+    }
+
+    .student-brand-name {
+        font-size: 16px;
+    }
+
+    .student-navigation {
+        gap: 10px;
+    }
+
+    .student-nav-home {
+        font-size: 12px;
+    }
+
+    .student-nav-primary {
+        padding: 9px 10px;
+    }
+
+    .student-main {
+        padding: 14px 10px;
+    }
+
+    .student-footer {
+        padding: 16px 12px;
+        font-size: 11px;
+    }
+
+    .student-body .sf-list .sf-card,
+    .student-body .sf-detail .sf-card,
+    .student-body .sf-page .sf-box {
+        border-radius: 10px;
+    }
+}
+
+/* REDUCED MOTION */
+
+@media (prefers-reduced-motion: reduce) {
+    .student-body *,
+    .student-body *::before,
+    .student-body *::after {
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
     }
 }
