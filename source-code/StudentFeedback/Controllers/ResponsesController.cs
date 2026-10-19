@@ -10,7 +10,7 @@ using StudentFeedback.Models;
 namespace StudentFeedback.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Student,Admin")]
 [Route("api/responses")]
 public sealed class ResponsesController : ControllerBase
 {
@@ -21,6 +21,7 @@ public sealed class ResponsesController : ControllerBase
         _db = db;
     }
 
+    // Lấy ID người đang đăng nhập từ cookie.
     private int? GetCurrentUserId()
     {
         string? claim = User.FindFirstValue(
@@ -31,7 +32,26 @@ public sealed class ResponsesController : ControllerBase
             : null;
     }
 
+    // Xác nhận tài khoản vẫn hoạt động
+    // và vai trò trong database khớp cookie.
+    private async Task<bool> IsActiveUserAsync(int userId)
+    {
+        bool isAdmin = User.IsInRole("Admin");
+        bool isStudent = User.IsInRole("Student");
+
+        return await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u =>
+                u.Id == userId &&
+                u.IsActive &&
+                (
+                    (isAdmin && u.Role == "Admin") ||
+                    (isStudent && u.Role == "Student")
+                ));
+    }
+
     // GET: /api/responses
+    // GET: /api/responses?reflectionId=16
     [HttpGet]
     public async Task<IActionResult> GetAll(
         [FromQuery] int? reflectionId)
@@ -41,7 +61,11 @@ public sealed class ResponsesController : ControllerBase
         if (!currentUserId.HasValue)
             return Unauthorized();
 
-        if (reflectionId.HasValue && reflectionId.Value <= 0)
+        if (!await IsActiveUserAsync(currentUserId.Value))
+            return Forbid();
+
+        if (reflectionId.HasValue &&
+            reflectionId.Value <= 0)
         {
             return BadRequest(new
             {
@@ -53,7 +77,7 @@ public sealed class ResponsesController : ControllerBase
             .AsNoTracking()
             .AsQueryable();
 
-        // Student chỉ được xem phản hồi thuộc phản ánh của mình.
+        // Student chỉ xem phản hồi thuộc phản ánh của mình.
         if (!User.IsInRole("Admin"))
         {
             query = query.Where(r =>
@@ -70,6 +94,7 @@ public sealed class ResponsesController : ControllerBase
 
         var items = await query
             .OrderByDescending(r => r.CreatedAt)
+            .ThenByDescending(r => r.Id)
             .Select(r => new
             {
                 r.Id,
@@ -91,6 +116,12 @@ public sealed class ResponsesController : ControllerBase
 
         if (!currentUserId.HasValue)
             return Unauthorized();
+
+        if (!await IsActiveUserAsync(currentUserId.Value))
+            return Forbid();
+
+        if (id <= 0)
+            return NotFound();
 
         var query = _db.Responses
             .AsNoTracking()
@@ -115,92 +146,178 @@ public sealed class ResponsesController : ControllerBase
             })
             .FirstOrDefaultAsync();
 
-        return item is null ? NotFound() : Ok(item);
+        return item is null
+            ? NotFound()
+            : Ok(item);
     }
 
     // POST: /api/responses
+    // Chỉ Admin được tạo phản hồi.
     [HttpPost]
     [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
         [FromBody] ResponseCreateRequest request)
     {
-        int? currentUserId = GetCurrentUserId();
+        int? adminId = GetCurrentUserId();
 
-        if (!currentUserId.HasValue)
+        if (!adminId.HasValue)
             return Unauthorized();
 
-        bool isAdmin = await _db.Users.AnyAsync(u =>
-            u.Id == currentUserId.Value &&
-            u.Role == "Admin");
+        bool isActiveAdmin = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u =>
+                u.Id == adminId.Value &&
+                u.Role == "Admin" &&
+                u.IsActive);
 
-        if (!isAdmin)
+        if (!isActiveAdmin)
             return Forbid();
 
-        bool reflectionExists = await _db.Reflections
-            .AnyAsync(r => r.Id == request.ReflectionId);
+        string content =
+            request.Content?.Trim() ?? string.Empty;
 
-        if (!reflectionExists)
+        if (string.IsNullOrWhiteSpace(content) ||
+            content.Length > 4000)
         {
             return BadRequest(new
             {
-                message = "ReflectionId không tồn tại."
+                message =
+                    "Nội dung phản hồi phải có từ 1 đến 4000 ký tự."
             });
         }
 
-        string content = request.Content?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(content))
+        if (request.ReflectionId <= 0)
         {
             return BadRequest(new
             {
-                message = "Nội dung phản hồi không được để trống."
+                message = "ReflectionId không hợp lệ."
             });
         }
 
-        var item = new Response
+        // Lấy Reflection để xác định Student nhận thông báo.
+        var reflection = await _db.Reflections
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r =>
+                r.Id == request.ReflectionId);
+
+        if (reflection is null)
+        {
+            return NotFound(new
+            {
+                message = "Không tìm thấy phản ánh."
+            });
+        }
+
+        var now = DateTime.UtcNow;
+
+        // Người viết phản hồi là Admin đang đăng nhập.
+        // Không nhận UserId từ client.
+        var response = new Response
         {
             Content = content,
-            ReflectionId = request.ReflectionId,
-
-            // Không dùng request.UserId.
-            UserId = currentUserId.Value,
-
-            CreatedAt = DateTime.UtcNow
+            ReflectionId = reflection.Id,
+            UserId = adminId.Value,
+            CreatedAt = now
         };
 
-        _db.Responses.Add(item);
+        _db.Responses.Add(response);
+
+        // Giữ nguyên nghiệp vụ Admin/ReflectionReply:
+        // Student nhận thông báo khi Admin phản hồi.
+        var notification = new Notification
+        {
+            UserId = reflection.UserId,
+            ReflectionId = reflection.Id,
+            Title = "Bạn có phản hồi mới từ Admin",
+            Content =
+                $"Phản ánh PF{reflection.Id:D4} " +
+                "đã nhận được phản hồi mới từ Admin. " +
+                "Vui lòng mở chi tiết phản ánh để xem nội dung.",
+            Type = "AdminReplied",
+            IsRead = false,
+            CreatedAt = now
+        };
+
+        _db.Notifications.Add(notification);
+
+        // Lưu phản hồi và thông báo cùng một lần.
         await _db.SaveChangesAsync();
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = item.Id },
+            new { id = response.Id },
             new
             {
-                item.Id,
-                item.Content,
-                item.ReflectionId,
-                item.UserId,
-                item.CreatedAt
+                response.Id,
+                response.Content,
+                response.ReflectionId,
+                response.UserId,
+                response.CreatedAt
             });
     }
 
     // PUT: /api/responses/5
+    // Chỉ Admin tạo phản hồi mới được sửa nội dung.
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
-    public IActionResult Update(int id)
+    public async Task<IActionResult> Update(
+        int id,
+        [FromBody] ResponseUpdateRequest request)
     {
-        return StatusCode(
-            StatusCodes.Status405MethodNotAllowed,
-            new
+        int? adminId = GetCurrentUserId();
+
+        if (!adminId.HasValue)
+            return Unauthorized();
+
+        bool isActiveAdmin = await _db.Users
+            .AsNoTracking()
+            .AnyAsync(u =>
+                u.Id == adminId.Value &&
+                u.Role == "Admin" &&
+                u.IsActive);
+
+        if (!isActiveAdmin)
+            return Forbid();
+
+        if (id <= 0)
+            return NotFound();
+
+        var response = await _db.Responses
+            .FirstOrDefaultAsync(r => r.Id == id);
+
+        if (response is null)
+            return NotFound();
+
+        // Admin chỉ được sửa phản hồi do chính mình tạo.
+        if (response.UserId != adminId.Value)
+            return Forbid();
+
+        string content =
+            request.Content?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(content) ||
+            content.Length > 4000)
+        {
+            return BadRequest(new
             {
                 message =
-                    "Chức năng sửa phản hồi hiện chưa được hỗ trợ."
+                    "Nội dung phản hồi phải có từ 1 đến 4000 ký tự."
             });
+        }
+
+        response.Content = content;
+
+        await _db.SaveChangesAsync();
+
+        return NoContent();
     }
 
     // DELETE: /api/responses/5
+    // Chưa hỗ trợ xóa để bảo vệ lịch sử phản hồi.
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Admin")]
     [ValidateAntiForgeryToken]
     public IActionResult Delete(int id)
     {

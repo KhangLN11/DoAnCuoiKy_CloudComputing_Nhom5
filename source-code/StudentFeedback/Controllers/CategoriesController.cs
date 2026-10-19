@@ -9,8 +9,9 @@ using StudentFeedback.Models;
 namespace StudentFeedback.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Student,Admin")]
 [Route("api/categories")]
+[Produces("application/json")]
 public sealed class CategoriesController : ControllerBase
 {
     private readonly ApplicationDbContext _db;
@@ -21,18 +22,17 @@ public sealed class CategoriesController : ControllerBase
     }
 
     // GET: api/categories
-    // Student và Admin đã đăng nhập đều được xem danh mục.
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
         var items = await _db.Categories
             .AsNoTracking()
             .OrderBy(x => x.Id)
-            .Select(x => new
+            .Select(x => new CategoryResponse
             {
-                x.Id,
-                x.Name,
-                x.Description
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description
             })
             .ToListAsync();
 
@@ -46,46 +46,77 @@ public sealed class CategoriesController : ControllerBase
         var item = await _db.Categories
             .AsNoTracking()
             .Where(x => x.Id == id)
-            .Select(x => new
+            .Select(x => new CategoryResponse
             {
-                x.Id,
-                x.Name,
-                x.Description
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description
             })
             .FirstOrDefaultAsync();
 
-        return item is null ? NotFound() : Ok(item);
+        if (item is null)
+        {
+            return NotFound(new
+            {
+                message = "Không tìm thấy danh mục."
+            });
+        }
+
+        return Ok(item);
     }
 
     // POST: api/categories
-    // Chỉ Admin được thêm danh mục.
     [Authorize(Roles = "Admin")]
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CategoryRequest request)
     {
+        var name = request.Name?.Trim();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return BadRequest(new
+            {
+                message = "Tên danh mục không được để trống."
+            });
+        }
+
+        var normalizedName = name.ToLower();
+
+        var isDuplicate = await _db.Categories
+            .AnyAsync(x => x.Name.ToLower() == normalizedName);
+
+        if (isDuplicate)
+        {
+            return Conflict(new
+            {
+                message = "Tên danh mục đã tồn tại."
+            });
+        }
+
         var item = new Category
         {
-            Name = request.Name.Trim(),
+            Name = name,
             Description = request.Description?.Trim()
         };
 
         _db.Categories.Add(item);
         await _db.SaveChangesAsync();
 
+        var response = new CategoryResponse
+        {
+            Id = item.Id,
+            Name = item.Name,
+            Description = item.Description
+        };
+
         return CreatedAtAction(
             nameof(GetById),
             new { id = item.Id },
-            new
-            {
-                item.Id,
-                item.Name,
-                item.Description
-            });
+            response);
     }
 
     // PUT: api/categories/1
-    // Chỉ Admin được sửa danh mục.
     [Authorize(Roles = "Admin")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(
@@ -96,10 +127,38 @@ public sealed class CategoriesController : ControllerBase
 
         if (item is null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Không tìm thấy danh mục."
+            });
         }
 
-        item.Name = request.Name.Trim();
+        var name = request.Name?.Trim();
+
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return BadRequest(new
+            {
+                message = "Tên danh mục không được để trống."
+            });
+        }
+
+        var normalizedName = name.ToLower();
+
+        var isDuplicate = await _db.Categories
+            .AnyAsync(x =>
+                x.Id != id &&
+                x.Name.ToLower() == normalizedName);
+
+        if (isDuplicate)
+        {
+            return Conflict(new
+            {
+                message = "Tên danh mục đã tồn tại."
+            });
+        }
+
+        item.Name = name;
         item.Description = request.Description?.Trim();
 
         await _db.SaveChangesAsync();
@@ -108,7 +167,6 @@ public sealed class CategoriesController : ControllerBase
     }
 
     // DELETE: api/categories/1
-    // Chỉ Admin được xóa danh mục.
     [Authorize(Roles = "Admin")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
@@ -117,11 +175,13 @@ public sealed class CategoriesController : ControllerBase
 
         if (item is null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                message = "Không tìm thấy danh mục."
+            });
         }
 
-        // Không xóa danh mục đang được phản ánh sử dụng.
-        bool isUsed = await _db.Reflections
+        var isUsed = await _db.Reflections
             .AnyAsync(x => x.CategoryId == id);
 
         if (isUsed)
@@ -137,4 +197,14 @@ public sealed class CategoriesController : ControllerBase
 
         return NoContent();
     }
+}
+
+// DTO phản hồi API
+public sealed class CategoryResponse
+{
+    public int Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string? Description { get; set; }
 }
