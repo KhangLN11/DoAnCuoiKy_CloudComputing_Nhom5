@@ -1,0 +1,60 @@
+
+services:
+  db:
+    image: mariadb:10.4
+    container_name: studentfeedback-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'mysqladmin ping -h 127.0.0.1 -uroot -p"$$MYSQL_ROOT_PASSWORD" --silent'
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 30s
+    networks:
+      - studentfeedback-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: studentfeedback-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=db;Port=3306;Database=${DB_NAME};User=${DB_USER};Password=${DB_PASSWORD};"
+      Minio__Endpoint: "studentfeedback-minio:9000"
+      Minio__AccessKey: ${MINIO_ACCESS_KEY}
+      Minio__SecretKey: ${MINIO_SECRET_KEY}
+      Minio__BucketName: student-feedback-attachments
+      Minio__UseSSL: "false"
+    ports:
+      - "127.0.0.1:5050:8080"
+    networks:
+      - studentfeedback-network
+      - studentfeedback-shared
+
+networks:
+  studentfeedback-network:
+    driver: bridge
+
+  studentfeedback-shared:
+    external: true
+    name: studentfeedback-shared
+
+volumes:
+  mariadb_data:

@@ -168,34 +168,16 @@
 
 
         <section class="panel">
-            <h2>Tệp đính kèm (@Model.Attachments.Count)</h2>
 
-            @if (Model.Attachments.Count == 0)
-            {
-                <p class="detail-empty">
-                    Không có tệp đính kèm.
-                </p>
-            }
-            else
-            {
-                @foreach (var attachment in Model.Attachments)
-                {
-                    <div class="attachment-item">
-                        <strong>@attachment.FileName</strong>
+    <h2>
+        Tệp đính kèm (@Model.Attachments.Count)
+    </h2>
 
-                        <span>
-                            @((attachment.FileSize / 1024.0).ToString("N1"))
-                            KB
-                        </span>
-                    </div>
-                }
-            }
+    @await Html.PartialAsync(
+        "_ReflectionAttachments",
+        Model.Attachments)
 
-            <p class="attachment-note">
-                Chức năng tải tệp sẽ được kết nối khi
-                hoàn thiện cơ chế lưu trữ tệp.
-            </p>
-        </section>
+</section>
     </div>
 
     <aside>

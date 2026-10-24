@@ -1,84 +1,315 @@
+@using Microsoft.EntityFrameworkCore
+@inject StudentFeedback.Data.ApplicationDbContext Db
+@model StudentFeedback.Models.ViewModels.StudentReflectionDetailsViewModel
+
 @{
     ViewData["Title"] = "Chi tiết phản ánh";
     Layout = "~/Views/Shared/_StudentLayout.cshtml";
-    var id = Context.Request.Query["id"].ToString();
-    if (string.IsNullOrWhiteSpace(id)) id = ViewContext.RouteData.Values["id"]?.ToString() ?? "1";
-    var items = new[]
+
+    string statusText = Model.Status switch
     {
-        new { Id="1", Code="PF001", Title="Máy chiếu phòng A101 bị hỏng", Category="Cơ sở vật chất", Status="Đang xử lý", Created="05/10/2025 10:24", Updated="06/10/2025 09:15", Content="Phòng học A101 không hiển thị hình ảnh. Thiết bị trong phòng đã cũ, ảnh hưởng đến quá trình học tập. Mong nhà trường kiểm tra và hỗ trợ sửa chữa sớm." },
-        new { Id="2", Code="PF002", Title="Wifi chập chờn tại thư viện", Category="Dịch vụ sinh viên", Status="Đã xử lý", Created="03/10/2025 08:30", Updated="04/10/2025 15:20", Content="Kết nối Wi-Fi tại thư viện thường xuyên bị gián đoạn, khiến sinh viên khó tra cứu tài liệu học tập." },
-        new { Id="3", Code="PF003", Title="Quạt phòng B202 không hoạt động", Category="Phòng học", Status="Mới tạo", Created="01/10/2025 13:00", Updated="Chưa cập nhật", Content="Quạt trần trong phòng B202 không hoạt động. Mong bộ phận kỹ thuật kiểm tra." },
-        new { Id="4", Code="PF004", Title="Bàn ghế lớp học bị hư hỏng", Category="Cơ sở vật chất", Status="Đang xử lý", Created="28/09/2025 10:00", Updated="29/09/2025 14:00", Content="Một số bàn ghế lớp học bị hư hỏng, gây bất tiện trong giờ học." },
-        new { Id="5", Code="PF005", Title="Thủ tục đăng ký học phần lỗi", Category="Học vụ", Status="Đã xử lý", Created="25/09/2025 09:00", Updated="26/09/2025 11:30", Content="Hệ thống đăng ký học phần báo lỗi trong quá trình xác nhận môn học." }
+        "Pending" => "Mới tạo",
+        "InProgress" => "Đang xử lý",
+        "Resolved" => "Đã xử lý",
+        "Closed" => "Đã đóng",
+        _ => Model.Status
     };
-    var item = items.FirstOrDefault(x => x.Id == id);
+
+    string statusClass = Model.Status switch
+    {
+        "Pending" => "sf-new",
+        "InProgress" => "sf-working",
+        "Resolved" => "sf-done",
+        "Closed" => "sf-closed",
+        _ => "sf-closed"
+    };
+
+    var reflectionCode = $"PF{Model.Id:D4}";
+
+    var attachments = await Db.Attachments
+    .AsNoTracking()
+    .Where(a => a.ReflectionId == Model.Id)
+    .OrderBy(a => a.Id)
+    .ToListAsync();
 }
-<h1 style="color:red">KIỂM TRA TRANG DETAILS</h1>
+
 <style>
-    .sf-detail { max-width: 1120px; margin: 12px auto 50px; }
-    .sf-detail h1 { font-size: 24px; font-weight: 800; color: #2d3748; }
-    .sf-detail h2 { font-size: 17px; font-weight: 800; color: #2d3748; }
-    .sf-detail .sf-card { background: #fff; border: 1px solid #edf0f4; border-radius: 14px; box-shadow: 0 4px 18px #2434480a; }
-    .sf-detail .sf-meta { border: 1px solid #edf0f4; border-radius: 10px; padding: 16px; height: 100%; }
-    .sf-detail .sf-meta small { display: block; color: #8b97a5; margin-bottom: 6px; }
-    .sf-detail .sf-meta strong { color: #2d3748; }
-    .sf-detail .sf-state { background: #fff3da; color: #ad7b15; border-radius: 7px; padding: 8px 13px; font-weight: 700; font-size: 12px; }
-    .sf-detail .sf-section { border-top: 1px solid #edf0f4; padding: 26px 0; }
-    .sf-detail .sf-reply { background: #f1f8fd; border: 1px solid #e0eef7; border-radius: 9px; padding: 18px; }
+    .sf-detail {
+        max-width: 1120px;
+        margin: 12px auto 50px;
+    }
+
+    .sf-detail h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #2d3748;
+    }
+
+    .sf-detail h2 {
+        font-size: 17px;
+        font-weight: 800;
+        color: #2d3748;
+    }
+
+    .sf-detail .sf-card {
+        background: #fff;
+        border: 1px solid #edf0f4;
+        border-radius: 14px;
+        box-shadow: 0 4px 18px #2434480a;
+    }
+
+    .sf-detail .sf-meta {
+        border: 1px solid #edf0f4;
+        border-radius: 10px;
+        padding: 16px;
+        height: 100%;
+    }
+
+    .sf-detail .sf-meta small {
+        display: block;
+        color: #8b97a5;
+        margin-bottom: 6px;
+    }
+
+    .sf-detail .sf-meta strong {
+        color: #2d3748;
+    }
+
+    .sf-detail .sf-state {
+        display: inline-block;
+        border-radius: 7px;
+        padding: 8px 13px;
+        font-weight: 700;
+        font-size: 12px;
+    }
+
+    .sf-detail .sf-new {
+        background: #fff0ed;
+        color: #ce665d;
+    }
+
+    .sf-detail .sf-working {
+        background: #fff3da;
+        color: #ad7b15;
+    }
+
+    .sf-detail .sf-done {
+        background: #e8f8ef;
+        color: #218b63;
+    }
+
+    .sf-detail .sf-closed {
+        background: #eff1f4;
+        color: #6e7b8a;
+    }
+
+    .sf-detail .sf-section {
+        border-top: 1px solid #edf0f4;
+        padding: 26px 0;
+    }
+
+    .sf-detail .sf-content {
+        color: #5f6e7d;
+        line-height: 1.9;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .sf-detail .sf-reply {
+        background: #f1f8fd;
+        border: 1px solid #e0eef7;
+        border-radius: 9px;
+        padding: 18px;
+    }
+
+    .sf-detail .sf-reply-content {
+        color: #5b7388;
+        line-height: 1.8;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+    }
+
+    .sf-detail .sf-avatar {
+        width: 38px;
+        height: 38px;
+        background: #d7eaf7;
+        color: #477b9d;
+        font-weight: 700;
+    }
+
+    .sf-detail .sf-empty {
+        border: 1px dashed #dce3eb;
+        border-radius: 9px;
+        background: #f8fafc;
+        padding: 20px;
+        color: #64748b;
+        font-size: 13px;
+    }
 </style>
 
 <div class="sf-detail container">
-    <a href="/Student/List" class="text-decoration-none d-inline-block mb-4" style="color:#64748b">← Quay lại danh sách</a>
 
-    @if (item == null)
-    {
-        <section class="sf-card p-5 text-center">
-            <h1>Không tìm thấy phản ánh</h1>
-            <p class="text-secondary">Mã phản ánh không tồn tại trong dữ liệu minh họa.</p>
-            <a href="/Student/List" class="btn btn-warning">Về danh sách phản ánh</a>
-        </section>
-    }
-    else
-    {
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
-            <div>
-                <h1 class="mb-2">@item.Code - @item.Title</h1>
-                <p class="small text-secondary mb-0">Thông tin chi tiết phản ánh (dữ liệu minh họa)</p>
-            </div>
-            <span class="sf-state">@item.Status</span>
+    <a asp-controller="Student"
+       asp-action="List"
+       class="text-decoration-none d-inline-block mb-4"
+       style="color:#64748b">
+        ← Quay lại danh sách
+    </a>
+
+    <!-- TIÊU ĐỀ VÀ TRẠNG THÁI -->
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+        <div>
+            <h1 class="mb-2">
+                @reflectionCode - @Model.Title
+            </h1>
+
+            <p class="small text-secondary mb-0">
+                Thông tin chi tiết phản ánh đã gửi.
+            </p>
         </div>
 
-        <section class="sf-card px-4">
-            <div class="row g-3 py-4">
-                <div class="col-md-4"><div class="sf-meta"><small>▤ Danh mục</small><strong>@item.Category</strong></div></div>
-                <div class="col-md-4"><div class="sf-meta"><small>▣ Ngày tạo</small><strong>@item.Created</strong></div></div>
-                <div class="col-md-4"><div class="sf-meta"><small>◷ Cập nhật lần cuối</small><strong>@item.Updated</strong></div></div>
-            </div>
-            <div class="sf-section">
-                <h2>Nội dung phản ánh</h2>
-                <p class="text-secondary mb-0" style="line-height:1.9">@item.Content</p>
-            </div>
-            <div class="sf-section">
-                <h2>Minh chứng</h2>
-                <div class="rounded border p-3 d-flex gap-3 align-items-center" style="max-width:560px">
-                    <div style="font-size:44px;color:#ffa726" aria-hidden="true">▧</div>
-                    <div>
-                        <strong class="d-block">Khu vực tệp minh chứng</strong>
-                        <small class="text-secondary">Chưa có tệp thật. Minh chứng sẽ hiển thị khi kết nối chức năng tải lên.</small>
-                    </div>
+        <span class="sf-state @statusClass">
+            @statusText
+        </span>
+    </div>
+
+    <section class="sf-card px-4">
+
+        <!-- THÔNG TIN TỔNG QUAN -->
+        <div class="row g-3 py-4">
+
+            <div class="col-md-4">
+                <div class="sf-meta">
+                    <small>▤ Danh mục</small>
+                    <strong>@Model.CategoryName</strong>
                 </div>
             </div>
-            <div class="sf-section">
-                <h2>Phản hồi từ Admin</h2>
-                <div class="sf-reply d-flex gap-3">
-                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width:38px;height:38px;background:#d7eaf7;color:#477b9d;font-weight:700">AD</div>
-                    <div>
-                        <strong>Phản hồi minh họa</strong>
-                        <p class="small mb-1 mt-2" style="color:#5b7388">Nhà trường đã tiếp nhận phản ánh và sẽ kiểm tra, xử lý theo quy trình.</p>
-                        <small class="text-secondary">Đây không phải phản hồi thật từ Admin.</small>
-                    </div>
+
+            <div class="col-md-4">
+                <div class="sf-meta">
+                    <small>▣ Ngày tạo</small>
+                    <strong>
+                        @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </strong>
                 </div>
             </div>
-        </section>
-    }
+
+            <div class="col-md-4">
+                <div class="sf-meta">
+                    <small>◷ Cập nhật lần cuối</small>
+                    <strong>
+                        @if (Model.UpdatedAt.HasValue)
+                        {
+                            @Model.UpdatedAt.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        }
+                        else
+                        {
+                            <text>Chưa cập nhật</text>
+                        }
+                    </strong>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- NỘI DUNG PHẢN ÁNH -->
+        <div class="sf-section">
+            <h2 class="mb-3">Nội dung phản ánh</h2>
+
+            <div class="sf-content">@Model.Content</div>
+        </div>
+
+        <!-- MINH CHỨNG -->
+<div class="sf-section">
+
+    <div class="d-flex justify-content-between
+                align-items-center flex-wrap gap-2 mb-3">
+
+        <h2 class="mb-0">
+            Minh chứng
+        </h2>
+
+        <span class="small text-secondary">
+            @attachments.Count tệp
+        </span>
+    </div>
+
+    @await Html.PartialAsync(
+        "_ReflectionAttachments",
+        attachments)
+
+</div>
+
+        <!-- PHẢN HỒI ADMIN -->
+        <div class="sf-section">
+
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <h2 class="mb-0">Phản hồi từ Admin</h2>
+
+                <span class="small text-secondary">
+                    @Model.Responses.Count phản hồi
+                </span>
+            </div>
+
+            @if (Model.Responses.Count == 0)
+            {
+                <div class="sf-empty">
+                    <strong class="d-block mb-1">
+                        Chưa có phản hồi từ Admin
+                    </strong>
+
+                    <span>
+                        Nhà trường chưa gửi phản hồi cho phản ánh này.
+                        Bạn có thể quay lại trang chi tiết để theo dõi
+                        khi có cập nhật.
+                    </span>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex flex-column gap-3">
+
+                    @foreach (var response in Model.Responses)
+                    {
+                        <article class="sf-reply d-flex gap-3">
+
+                            <div class="sf-avatar rounded-circle d-flex align-items-center justify-content-center flex-shrink-0">
+                                AD
+                            </div>
+
+                            <div class="flex-grow-1">
+
+                                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                                    <strong>
+                                        @response.AdminName
+                                    </strong>
+
+                                    <small class="text-secondary">
+                                        @response.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                                    </small>
+                                </div>
+
+                                <div class="sf-reply-content mt-2">
+                                    @response.Content
+                                </div>
+
+                            </div>
+                        </article>
+                    }
+
+                </div>
+            }
+
+        </div>
+
+    </section>
+
+    <div class="mt-4">
+        <a asp-controller="Student"
+           asp-action="List"
+           class="btn btn-outline-secondary">
+            ← Quay lại danh sách phản ánh
+        </a>
+    </div>
+
 </div>

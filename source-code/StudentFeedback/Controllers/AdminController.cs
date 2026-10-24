@@ -686,132 +686,192 @@ public async Task<IActionResult> ReflectionDetails(int id)
 }
 
 
-// POST: /Admin/ReflectionUpdateStatus
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> ReflectionUpdateStatus(
-    AdminReflectionStatusViewModel model)
-{
-    if (!ModelState.IsValid)
+
+    // POST: /Admin/ReflectionUpdateStatus
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReflectionUpdateStatus(
+        AdminReflectionStatusViewModel model)
     {
-        TempData["ErrorMessage"] =
-            "Trạng thái được chọn không hợp lệ.";
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] =
+                "Trạng thái được chọn không hợp lệ.";
 
-        return RedirectToAction(
-            nameof(ReflectionDetails),
-            new { id = model.ReflectionId });
-    }
+            return RedirectToAction(
+                nameof(ReflectionDetails),
+                new { id = model.ReflectionId });
+        }
 
-    var reflection = await _db.Reflections
-        .FirstOrDefaultAsync(r => r.Id == model.ReflectionId);
+        var reflection = await _db.Reflections
+            .FirstOrDefaultAsync(r => r.Id == model.ReflectionId);
 
-    if (reflection == null)
-    {
-        return NotFound();
-    }
+        if (reflection == null)
+        {
+            return NotFound();
+        }
 
-    if (reflection.Status == model.Status)
-    {
+        // Không tạo thông báo khi trạng thái không thay đổi.
+        if (reflection.Status == model.Status)
+        {
+            TempData["SuccessMessage"] =
+                "Trạng thái phản ánh không thay đổi.";
+
+            return RedirectToAction(
+                nameof(ReflectionDetails),
+                new { id = reflection.Id });
+        }
+
+        var statusText = model.Status switch
+        {
+            "Pending" => "Mới tạo",
+            "InProgress" => "Đang xử lý",
+            "Resolved" => "Đã xử lý",
+            "Closed" => "Đã đóng",
+            _ => model.Status
+        };
+
+        var now = DateTime.UtcNow;
+
+        // Cập nhật trạng thái phản ánh.
+        reflection.Status = model.Status;
+        reflection.UpdatedAt = now;
+
+        // Tạo thông báo cho sinh viên sở hữu phản ánh.
+        var notification = new Notification
+        {
+            UserId = reflection.UserId,
+            ReflectionId = reflection.Id,
+            Title = "Trạng thái phản ánh đã được cập nhật",
+            Content =
+                $"Phản ánh PF{reflection.Id:D4} " +
+                $"đã được cập nhật sang trạng thái " +
+                $"\"{statusText}\".",
+            Type = "StatusChanged",
+            IsRead = false,
+            CreatedAt = now
+        };
+
+        _db.Notifications.Add(notification);
+
+        // Lưu thay đổi trạng thái và thông báo cùng lúc.
+        await _db.SaveChangesAsync();
+
         TempData["SuccessMessage"] =
-            "Trạng thái phản ánh không thay đổi.";
+            "Cập nhật trạng thái phản ánh thành công!";
 
         return RedirectToAction(
             nameof(ReflectionDetails),
             new { id = reflection.Id });
     }
 
-    reflection.Status = model.Status;
-    reflection.UpdatedAt = DateTime.UtcNow;
-
-    await _db.SaveChangesAsync();
-
-    TempData["SuccessMessage"] =
-        "Cập nhật trạng thái phản ánh thành công!";
-
-    return RedirectToAction(
-        nameof(ReflectionDetails),
-        new { id = reflection.Id });
-}
 
 
-// POST: /Admin/ReflectionReply
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> ReflectionReply(
-    AdminResponseCreateViewModel model)
-{
-    if (model.ReflectionId <= 0)
+
+    // POST: /Admin/ReflectionReply
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReflectionReply(
+        AdminResponseCreateViewModel model)
     {
-        return BadRequest();
-    }
+        if (model.ReflectionId <= 0)
+        {
+            return BadRequest();
+        }
 
-    model.Content = model.Content?.Trim() ?? string.Empty;
+        model.Content =
+            model.Content?.Trim() ?? string.Empty;
 
-    if (string.IsNullOrWhiteSpace(model.Content))
-    {
-        ModelState.AddModelError(
-            nameof(model.Content),
-            "Vui lòng nhập nội dung phản hồi.");
-    }
+        if (string.IsNullOrWhiteSpace(model.Content))
+        {
+            ModelState.AddModelError(
+                nameof(model.Content),
+                "Vui lòng nhập nội dung phản hồi.");
+        }
 
-    if (!ModelState.IsValid)
-    {
-        TempData["ErrorMessage"] =
-            "Nội dung phản hồi không hợp lệ. " +
-            "Vui lòng nhập từ 1 đến 4000 ký tự.";
+        if (!ModelState.IsValid)
+        {
+            TempData["ErrorMessage"] =
+                "Nội dung phản hồi không hợp lệ. " +
+                "Vui lòng nhập từ 1 đến 4000 ký tự.";
+
+            return RedirectToAction(
+                nameof(ReflectionDetails),
+                new { id = model.ReflectionId });
+        }
+
+        // Lấy ID Admin từ cookie xác thực trên server.
+        string? userIdClaim =
+            User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!int.TryParse(userIdClaim, out int adminId)
+            || adminId <= 0)
+        {
+            return Unauthorized();
+        }
+
+        // Kiểm tra tài khoản hiện tại vẫn là Admin.
+        bool isAdmin = await _db.Users.AnyAsync(u =>
+            u.Id == adminId &&
+            u.Role == "Admin" &&
+            u.IsActive);
+
+        if (!isAdmin)
+        {
+            return Forbid();
+        }
+
+        // Lấy phản ánh để xác định sinh viên nhận thông báo.
+        var reflection = await _db.Reflections
+            .FirstOrDefaultAsync(r =>
+                r.Id == model.ReflectionId);
+
+        if (reflection == null)
+        {
+            return NotFound();
+        }
+
+        var now = DateTime.UtcNow;
+
+        // Lưu phản hồi của Admin.
+        var response = new Response
+        {
+            ReflectionId = reflection.Id,
+            UserId = adminId,
+            Content = model.Content,
+            CreatedAt = now
+        };
+
+        _db.Responses.Add(response);
+
+        // Tạo thông báo cho sinh viên sở hữu phản ánh.
+        var notification = new Notification
+        {
+            UserId = reflection.UserId,
+            ReflectionId = reflection.Id,
+            Title = "Bạn có phản hồi mới từ Admin",
+            Content =
+                $"Phản ánh PF{reflection.Id:D4} " +
+                "đã nhận được phản hồi mới từ Admin. " +
+                "Vui lòng mở chi tiết phản ánh để xem nội dung.",
+            Type = "AdminReplied",
+            IsRead = false,
+            CreatedAt = now
+        };
+
+        _db.Notifications.Add(notification);
+
+        // Lưu phản hồi và thông báo cùng một lần.
+        await _db.SaveChangesAsync();
+
+        TempData["SuccessMessage"] =
+            "Gửi phản hồi cho sinh viên thành công!";
 
         return RedirectToAction(
             nameof(ReflectionDetails),
-            new { id = model.ReflectionId });
+            new { id = reflection.Id });
     }
 
-    // Lấy ID Admin từ cookie xác thực trên server.
-    string? userIdClaim =
-        User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-    if (!int.TryParse(userIdClaim, out int adminId)
-        || adminId <= 0)
-    {
-        return Unauthorized();
-    }
-
-    // Kiểm tra tài khoản hiện tại vẫn là Admin.
-    bool isAdmin = await _db.Users.AnyAsync(u =>
-        u.Id == adminId && u.Role == "Admin");
-
-    if (!isAdmin)
-    {
-        return Forbid();
-    }
-
-    // Kiểm tra phản ánh tồn tại.
-    bool reflectionExists = await _db.Reflections
-        .AnyAsync(r => r.Id == model.ReflectionId);
-
-    if (!reflectionExists)
-    {
-        return NotFound();
-    }
-
-    var response = new Response
-    {
-        ReflectionId = model.ReflectionId,
-        UserId = adminId,
-        Content = model.Content,
-        CreatedAt = DateTime.UtcNow
-    };
-
-    _db.Responses.Add(response);
-
-    await _db.SaveChangesAsync();
-
-    TempData["SuccessMessage"] =
-        "Gửi phản hồi cho sinh viên thành công!";
-
-    return RedirectToAction(
-        nameof(ReflectionDetails),
-        new { id = model.ReflectionId });
-}
 
 
     // GET: /Admin/ImportStudents

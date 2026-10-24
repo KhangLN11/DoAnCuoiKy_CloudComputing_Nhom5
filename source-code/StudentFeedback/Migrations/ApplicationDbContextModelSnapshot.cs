@@ -83,6 +83,55 @@ namespace StudentFeedback.Migrations
                     b.ToTable("Categories");
                 });
 
+            modelBuilder.Entity("StudentFeedback.Models.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("ReflectionId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReflectionId");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
             modelBuilder.Entity("StudentFeedback.Models.Reflection", b =>
                 {
                     b.Property<int>("Id")
@@ -216,6 +265,25 @@ namespace StudentFeedback.Migrations
                         .IsRequired();
 
                     b.Navigation("Reflection");
+                });
+
+            modelBuilder.Entity("StudentFeedback.Models.Notification", b =>
+                {
+                    b.HasOne("StudentFeedback.Models.Reflection", "Reflection")
+                        .WithMany()
+                        .HasForeignKey("ReflectionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("StudentFeedback.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Reflection");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StudentFeedback.Models.Reflection", b =>

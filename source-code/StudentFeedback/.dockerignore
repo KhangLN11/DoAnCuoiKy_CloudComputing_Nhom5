@@ -1,0 +1,11 @@
+
+**/bin/
+**/obj/
+**/.vs/
+**/.git/
+**/.idea/
+**/node_modules/
+*.user
+*.suo
+.env
+.env.*

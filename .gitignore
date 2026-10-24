@@ -487,3 +487,21 @@ $RECYCLE.BIN/
 
 # Temporary student CSV imports
 **/App_Data/StudentCsvImports/
+
+.env.minio
+.env.minio.*
+!.env.minio.example
+
+# Local secrets
+.env
+.env.*
+!.env.example
+!.env.minio.example
+
+# Local development configuration
+**/appsettings.Development.json
+**/appsettings.Local.json
+
+# .NET build outputs
+**/bin/
+**/obj/
