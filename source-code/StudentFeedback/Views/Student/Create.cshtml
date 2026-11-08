@@ -1,4 +1,163 @@
-@{ ViewData["Title"]="Tạo phản ánh";Layout="_StudentLayout";}
-<section class="page-banner"><div class="banner-icon">📝</div><div><h1>Tạo phản ánh mới</h1><p>Mô tả rõ vấn đề để nhà trường tiếp nhận và xử lý.</p></div><span class="banner-deco">✎</span></section>
-<div class="content-split"><section class="surface form-surface"><form id="feedbackCreate" novalidate><div id="createMessage" class="sf-client-alert" role="alert" hidden></div><div class="field"><label for="titleInput">Tiêu đề phản ánh <em>*</em></label><input id="titleInput" name="title" maxlength="200" required placeholder="Nhập tiêu đề phản ánh..."/></div><div class="field"><label for="categoryInput">Danh mục <em>*</em></label><select id="categoryInput" name="categoryId" required><option value="">Đang tải danh mục…</option></select></div><div class="field"><label for="contentInput">Nội dung phản ánh <em>*</em></label><textarea id="contentInput" name="content" rows="7" maxlength="4000" required placeholder="Mô tả vấn đề, địa điểm và thời gian liên quan…"></textarea><div class="field-hint"><span>Hãy cung cấp thông tin đúng sự thật</span><span><b id="textLength">0</b>/4000</span></div></div><div class="sf-note-inline"><strong>Minh chứng:</strong> Backend hiện tại chưa cung cấp API tải tệp đính kèm. Vui lòng mô tả đầy đủ trong nội dung phản ánh.</div><div class="form-actions"><a href="/Student" class="btn-light">Hủy</a><button id="submitReflection" type="submit" class="btn-orange">Gửi phản ánh →</button></div></form></section><aside class="note-card"><h2>✦ Lưu ý</h2><ul><li>Cung cấp thông tin chính xác và đầy đủ.</li><li>Nêu rõ vấn đề, địa điểm và thời gian khi có thể.</li><li>Kiểm tra lại nội dung trước khi gửi.</li><li>Theo dõi phản hồi trong danh sách phản ánh.</li></ul><div class="note-art">✉</div><p>Mỗi phản ánh góp phần xây dựng môi trường học tập tốt hơn.</p></aside></div>
-@section Scripts{<script>window.StudentUI.initCreate();</script>}
+
+@{
+    ViewData["Title"] = "Tạo phản ánh";
+    Layout = "_StudentLayout";
+}
+
+<section class="page-banner">
+    <div class="banner-icon">📝</div>
+    <div>
+        <h1>Tạo phản ánh mới</h1>
+        <p>Mô tả rõ vấn đề để nhà trường tiếp nhận và xử lý.</p>
+    </div>
+    <span class="banner-deco">✎</span>
+</section>
+
+<div class="content-split">
+    <section class="surface form-surface">
+        <form id="feedbackCreate" novalidate>
+            <div id="createMessage"
+                 class="sf-client-alert"
+                 role="alert"
+                 aria-live="polite"
+                 hidden>
+            </div>
+
+            <div class="field">
+                <label for="titleInput">
+                    Tiêu đề phản ánh <em>*</em>
+                </label>
+                <input id="titleInput"
+                       name="title"
+                       type="text"
+                       maxlength="200"
+                       required
+                       placeholder="Nhập tiêu đề phản ánh..." />
+            </div>
+
+            <div class="field">
+                <label for="categoryInput">
+                    Danh mục <em>*</em>
+                </label>
+                <select id="categoryInput"
+                        name="categoryId"
+                        required>
+                    <option value="">Đang tải danh mục…</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="contentInput">
+                    Nội dung phản ánh <em>*</em>
+                </label>
+
+                <textarea id="contentInput"
+                          name="content"
+                          rows="7"
+                          maxlength="4000"
+                          required
+                          placeholder="Mô tả vấn đề, địa điểm và thời gian liên quan…"></textarea>
+
+                <div class="field-hint">
+                    <span>Hãy cung cấp thông tin đúng sự thật</span>
+                    <span>
+                        <b id="textLength">0</b>/4000
+                    </span>
+                </div>
+            </div>
+
+            <!-- KHU VỰC UPLOAD MINH CHỨNG -->
+            <div class="field">
+                <label for="attachmentInput">
+                    📎 Tệp minh chứng
+                    <span style="font-weight:400; color:#64748b;">
+                        (Không bắt buộc)
+                    </span>
+                </label>
+
+                <div style="
+                    padding:22px;
+                    border:2px dashed #cbd5e1;
+                    border-radius:14px;
+                    background:#f8fbff;
+                    text-align:center;">
+
+                    <div style="font-size:36px; margin-bottom:8px;">
+                        📁
+                    </div>
+
+                    <p style="margin-bottom:12px; color:#334155;">
+                        Chọn ảnh hoặc tài liệu minh chứng
+                    </p>
+
+                    <input id="attachmentInput"
+                           name="attachments"
+                           type="file"
+                           accept=".pdf,.jpg,.jpeg,.png"
+                           multiple
+                           aria-describedby="attachmentHelp"
+                           style="width:100%; max-width:400px;" />
+
+                    <p id="attachmentHelp"
+                       style="
+                           margin-top:12px;
+                           margin-bottom:0;
+                           color:#64748b;
+                           font-size:13px;">
+                        Hỗ trợ PDF, JPG, JPEG, PNG.
+                        Tối đa 5 tệp, mỗi tệp không quá 10 MB.
+                    </p>
+                </div>
+
+                <div id="attachmentList"
+                     aria-live="polite"
+                     style="margin-top:12px;">
+                </div>
+            </div>
+
+            <div class="sf-note-inline">
+                <strong>Minh chứng:</strong>
+                Tệp được lưu trên hệ thống MinIO sau khi
+                phản ánh được tạo thành công.
+            </div>
+
+            <div class="form-actions">
+                <a href="/Student" class="btn-light">
+                    Hủy
+                </a>
+
+                <button id="submitReflection"
+                        type="submit"
+                        class="btn-orange">
+                    Gửi phản ánh →
+                </button>
+            </div>
+        </form>
+    </section>
+
+    <aside class="note-card">
+        <h2>✦ Lưu ý</h2>
+
+        <ul>
+            <li>Cung cấp thông tin chính xác và đầy đủ.</li>
+            <li>Nêu rõ vấn đề, địa điểm và thời gian khi có thể.</li>
+            <li>Kiểm tra lại nội dung trước khi gửi.</li>
+            <li>Chỉ đính kèm PDF, JPG, JPEG hoặc PNG.</li>
+            <li>Mỗi tệp tối đa 10 MB, tối đa 5 tệp.</li>
+            <li>Theo dõi phản hồi trong danh sách phản ánh.</li>
+        </ul>
+
+        <div class="note-art">✉</div>
+
+        <p>
+            Mỗi phản ánh góp phần xây dựng
+            môi trường học tập tốt hơn.
+        </p>
+    </aside>
+</div>
+
+@section Scripts {
+    <script>
+        window.StudentUI.initCreate();
+    </script>
+}
