@@ -1,8 +1,219 @@
+
 @{
- var currentAction=ViewContext.RouteData.Values["action"]?.ToString();
- var isList=currentAction=="List"||currentAction=="Details";
- var displayName=User.Identity?.Name??"Sinh viên";
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+
+    var isStudentHome = currentController == "Student"
+                        && currentAction == "Index";
+
+    var isList = currentController == "Student"
+                 && (currentAction == "List" || currentAction == "Details");
+
+    var isProfile = currentController == "StudentProfile";
+
+    var isNotifications = currentController == "StudentNotifications";
+
+    var displayName = User.Identity?.Name ?? "Sinh viên";
 }
-<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>@ViewData["Title"] • StudentFeedback</title><link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"><link rel="stylesheet" href="~/css/feedback-ui.css" asp-append-version="true"></head>
-<body class="dashboard-page student-theme"><header class="app-topbar"><a href="/Student" class="brand">🎓 Student<span>Feedback</span></a><form class="global-search" method="get" action="/Student/List"><span>⌕</span><input name="search" aria-label="Tìm phản ánh của tôi" placeholder="Tìm kiếm phản ánh..."></form><div class="top-actions"><a href="/Student/Index#responses" class="top-bell" aria-label="Thông báo">♧</a><a href="/Student/Index#student-account" class="account-name"><span class="avatar">SV</span><span><strong>@displayName</strong><small>Tài khoản sinh viên</small></span></a><form method="post" asp-controller="Account" asp-action="Logout">@Html.AntiForgeryToken()<button type="submit" class="btn-logout">⇥ Đăng xuất</button></form></div></header>
-<div class="app-layout"><aside class="app-sidebar"><nav class="side-menu" aria-label="Menu sinh viên"><a href="/Student" class="@(currentAction=="Index"?"active":"")"><i>⌂</i>Trang chủ</a><a href="/Student/Create" class="@(currentAction=="Create"?"active":"")"><i>✎</i>Tạo phản ánh</a><a href="/Student/List" class="@(isList?"active":"")"><i>▤</i>Danh sách phản ánh</a><a href="/Student/Index#student-account" class="@(currentAction=="Index"?"active":"")"><i>♙</i>Thông tin tài khoản</a><a href="/Student/Index#responses" class="@(currentAction=="Index"?"active":"")"><i>♧</i>Phản hồi Admin</a></nav><div class="sidebar-decoration"><img src="~/images/books.png" alt="Trang trí sách và mũ tốt nghiệp" /></div></aside><main class="app-content">@if(TempData["SuccessMessage"] is string ok){<div class="flash success" role="status">@ok</div>}@if(TempData["ErrorMessage"] is string err){<div class="flash error" role="alert">@err</div>}@RenderBody()</main></div><script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script><script src="~/js/feedback-ui.js" asp-append-version="true"></script><script src="~/js/student-api-ui.js" asp-append-version="true"></script>@await RenderSectionAsync("Scripts",required:false)</body></html>
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1" />
+
+    <title>@ViewData["Title"] • StudentFeedback</title>
+
+    <link rel="stylesheet"
+          href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet"
+          href="~/css/feedback-ui.css"
+          asp-append-version="true" />
+</head>
+
+<body class="dashboard-page student-theme">
+
+    <!-- THANH ĐIỀU HƯỚNG TRÊN CÙNG -->
+    <header class="app-topbar">
+
+        <!-- Logo -->
+        <a href="/Student" class="brand">
+            🎓 Student<span>Feedback</span>
+        </a>
+
+        <!-- Tìm kiếm phản ánh -->
+        <form class="global-search"
+              method="get"
+              action="/Student/List">
+
+            <span aria-hidden="true">⌕</span>
+
+            <input name="search"
+                   aria-label="Tìm phản ánh của tôi"
+                   placeholder="Tìm kiếm phản ánh..." />
+        </form>
+
+        <!-- Các thao tác bên phải -->
+        <div class="top-actions">
+
+            <!-- CHUÔNG THÔNG BÁO -->
+            <a href="/Student/Notifications"
+               class="top-bell @(isNotifications ? "active" : "")"
+               aria-label="Xem thông báo"
+               title="Thông báo sinh viên">
+
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     width="24"
+                     height="24"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="2"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     aria-hidden="true">
+
+                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+
+                    <path d="M10 21h4" />
+                </svg>
+            </a>
+
+            <!-- THÔNG TIN TÀI KHOẢN -->
+            <a href="/Student/Profile"
+               class="account-name"
+               title="Xem thông tin tài khoản">
+
+                <span class="avatar">SV</span>
+
+                <span>
+                    <strong>@displayName</strong>
+                    <small>Tài khoản sinh viên</small>
+                </span>
+            </a>
+
+            <!-- ĐĂNG XUẤT -->
+            <form method="post"
+                  asp-controller="Account"
+                  asp-action="Logout">
+
+                @Html.AntiForgeryToken()
+
+                <button type="submit"
+                        class="btn-logout">
+                    ⇥ Đăng xuất
+                </button>
+            </form>
+
+        </div>
+    </header>
+
+    <!-- BỐ CỤC CHÍNH -->
+    <div class="app-layout">
+
+        <!-- SIDEBAR SINH VIÊN -->
+        <aside class="app-sidebar">
+
+            <nav class="side-menu"
+                 aria-label="Menu sinh viên">
+
+                <!-- TRANG CHỦ -->
+                <a href="/Student"
+                   class="@(isStudentHome ? "active" : "")">
+
+                    <i aria-hidden="true">⌂</i>
+                    Trang chủ
+                </a>
+
+                <!-- TẠO PHẢN ÁNH -->
+                <a href="/Student/Create"
+                   class="@(currentController == "Student" && currentAction == "Create" ? "active" : "")">
+
+                    <i aria-hidden="true">✎</i>
+                    Tạo phản ánh
+                </a>
+
+                <!-- DANH SÁCH PHẢN ÁNH -->
+                <a href="/Student/List"
+                   class="@(isList ? "active" : "")">
+
+                    <i aria-hidden="true">▤</i>
+                    Danh sách phản ánh
+                </a>
+
+                <!-- THÔNG TIN TÀI KHOẢN -->
+                <a href="/Student/Profile"
+                   class="@(isProfile ? "active" : "")">
+
+                    <i aria-hidden="true">♙</i>
+                    Thông tin tài khoản
+                </a>
+
+                <!-- PHẢN HỒI ADMIN -->
+                <a href="/Student/Index#responses">
+
+                    <i aria-hidden="true">✉</i>
+                    Phản hồi Admin
+                </a>
+
+                <!-- TRANG THÔNG BÁO -->
+                <a href="/Student/Notifications"
+                   class="@(isNotifications ? "active" : "")">
+
+                    <i aria-hidden="true">🔔</i>
+                    Thông báo
+                </a>
+
+            </nav>
+
+            <!-- HÌNH TRANG TRÍ SIDEBAR -->
+            <div class="sidebar-decoration">
+                <img src="~/images/books.png"
+                     alt="Trang trí sách và mũ tốt nghiệp" />
+            </div>
+
+        </aside>
+
+        <!-- NỘI DUNG TRANG -->
+        <main class="app-content">
+
+            <!-- THÔNG BÁO THÀNH CÔNG -->
+            @if (TempData["SuccessMessage"] is string ok)
+            {
+                <div class="flash success"
+                     role="status">
+                    @ok
+                </div>
+            }
+
+            <!-- THÔNG BÁO LỖI -->
+            @if (TempData["ErrorMessage"] is string err)
+            {
+                <div class="flash error"
+                     role="alert">
+                    @err
+                </div>
+            }
+
+            <!-- NỘI DUNG TỪ VIEW -->
+            @RenderBody()
+
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="~/js/feedback-ui.js"
+            asp-append-version="true"></script>
+
+    <script src="~/js/student-api-ui.js"
+            asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+
+</body>
+</html>

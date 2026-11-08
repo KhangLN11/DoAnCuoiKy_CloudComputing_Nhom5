@@ -30,6 +30,14 @@ public class ApplicationDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
+        // Ánh xạ tên bảng đúng với MariaDB Docker (Linux).
+modelBuilder.Entity<User>().ToTable("users");
+modelBuilder.Entity<Category>().ToTable("categories");
+modelBuilder.Entity<Reflection>().ToTable("reflections");
+modelBuilder.Entity<Response>().ToTable("responses");
+modelBuilder.Entity<Attachment>().ToTable("attachments");
+modelBuilder.Entity<Notification>().ToTable("notifications");
+
         // Email không được trùng.
         modelBuilder.Entity<User>()
             .HasIndex(u => u.Email)
