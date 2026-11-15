@@ -20,6 +20,8 @@ namespace StudentFeedback.Models.ViewModels
 
         public DateTime? UpdatedAt { get; set; }
 
+        public List<StudentFeedback.Models.Attachment> Attachments { get; set; } = new();
+
         public List<StudentReflectionResponseViewModel> Responses
             { get; set; } = new();
     }

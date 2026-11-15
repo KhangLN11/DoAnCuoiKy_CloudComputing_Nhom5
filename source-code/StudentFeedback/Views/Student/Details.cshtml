@@ -1,8 +1,13 @@
+@model StudentFeedback.Models.ViewModels.StudentReflectionDetailsViewModel
 @{ViewData["Title"]="Chi tiết phản ánh";Layout="_StudentLayout";}
 <a href="/Student/List" class="back-link">← Quay lại danh sách phản ánh</a>
 <section class="page-banner"><div class="banner-icon">⚙</div><div><h1 id="detailTitle">Đang tải phản ánh…</h1><p>Thông tin chi tiết phản ánh đã gửi.</p></div><span id="detailStatus" class="state">—</span></section>
 <div id="detailError" class="sf-client-alert" role="alert" hidden></div>
 <section class="surface detail-summary"><div><span>Danh mục</span><strong id="detailCategory">—</strong></div><div><span>Ngày tạo</span><strong id="detailCreated">—</strong></div><div><span>Cập nhật lần cuối</span><strong id="detailUpdated">—</strong></div></section>
 <section class="surface detail-section"><h2>Nội dung phản ánh</h2><p id="detailContent" class="pre-line">Đang tải…</p></section>
+<section class="surface detail-section">
+    <h2>Tệp đính kèm (@Model.Attachments.Count)</h2>
+    @await Html.PartialAsync("_ReflectionAttachments", Model.Attachments)
+</section>
 <section class="surface detail-section"><h2>Phản hồi từ Admin</h2><div id="detailResponses"><p>Đang tải…</p></div></section>
 @section Scripts{<script>window.StudentUI.initDetails();</script>}
