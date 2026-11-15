@@ -468,6 +468,12 @@ namespace StudentFeedback.Controllers
 
             // Chỉ truy vấn phản hồi sau khi đã xác nhận
             // phản ánh thuộc sinh viên đang đăng nhập.
+            model.Attachments = await _db.Attachments
+                .AsNoTracking()
+                .Where(a => a.ReflectionId == model.Id)
+                .OrderBy(a => a.Id)
+                .ToListAsync();
+
             model.Responses = await _db.Responses
                 .AsNoTracking()
                 .Where(r => r.ReflectionId == model.Id)
